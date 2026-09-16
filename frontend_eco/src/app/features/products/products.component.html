@@ -1,0 +1,97 @@
+<div class="products-page">
+  <div class="page-header">
+    <div class="container">
+      <h1 class="page-title">Danh Sách Sản Phẩm</h1>
+      <p class="page-subtitle">Quản lý và xem các sản phẩm trong hệ thống microservice</p>
+    </div>
+  </div>
+
+  <div class="container main-content">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="search-box">
+        <lucide-angular [img]="SearchIcon" [size]="18" class="search-icon"></lucide-angular>
+        <input
+          type="text"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Tìm kiếm tên sản phẩm..."
+          class="search-input"
+        />
+      </div>
+
+      <div class="category-tabs">
+        <button
+          (click)="selectCategory(null)"
+          class="tab-btn"
+          [class.active]="selectedCategoryId() === null"
+        >
+          Tất cả
+        </button>
+        @for (cat of categories(); track cat.id) {
+          <button
+            (click)="selectCategory(cat.id)"
+            class="tab-btn"
+            [class.active]="selectedCategoryId() === cat.id"
+          >
+            {{ cat.name }}
+          </button>
+        }
+      </div>
+    </div>
+
+
+    <!-- Products Grid -->
+    @if (isLoading()) {
+      <div class="no-products"><p>Đang tải sản phẩm...</p></div>
+    } @else if (filteredProducts().length === 0) {
+      <div class="no-products">
+        <p>{{ errorMessage() || 'Không tìm thấy sản phẩm nào phù hợp.' }}</p>
+      </div>
+    } @else {
+      <div class="products-grid">
+        @for (product of paginatedProducts(); track product.id) {
+          <div class="product-card" [routerLink]="['/products', product.id]">
+            <div class="product-img-wrapper">
+              <img [src]="product.imageUrl || 'https://placehold.co/600x600?text=No+Image'" [alt]="product.name" class="product-img" />
+            </div>
+
+            <div class="product-info">
+              <span class="product-category">{{ product.category?.name || 'Chưa phân loại' }}</span>
+              <h3 class="product-name">{{ product.name }}</h3>
+              <div class="product-price-box">
+                <span class="price-current">{{ product.price | currency:'VND':'symbol-narrow':'1.0-0' }}</span>
+                @if (product.status === 'ACTIVE') {
+                  <span class="stock-status active">Còn hàng</span>
+                } @else {
+                  <span class="stock-status out">Tạm hết</span>
+                }
+              </div>
+            </div>
+
+            <div class="card-actions">
+              <button
+                class="btn btn-primary"
+                (click)="addToCart(product, $event)"
+                [disabled]="product.status !== 'ACTIVE' || addingProductId() === product.id"
+              >
+                <lucide-angular [img]="ShoppingBagIcon" [size]="16"></lucide-angular>
+                {{ addingProductId() === product.id ? 'Đang thêm...' : 'Thêm giỏ hàng' }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <app-pagination
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize"
+        [totalItems]="filteredProducts().length"
+        (pageChange)="currentPage.set($event)"
+      ></app-pagination>
+    }
+  </div>
+</div>
+
+
+

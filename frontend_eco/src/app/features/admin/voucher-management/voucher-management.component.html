@@ -1,0 +1,190 @@
+<div class="page-topbar">
+  <div>
+    <h1 class="page-title">Quản Lý Voucher</h1>
+    <p class="page-subtitle">Tạo và theo dõi các mã giảm giá</p>
+  </div>
+  <button class="btn btn-black" (click)="openCreate()">
+    <lucide-angular [img]="PlusIcon" [size]="15" /> Tạo Voucher
+  </button>
+</div>
+
+@if (success()) { <div class="alert alert-success">{{ success() }}</div> }
+@if (error() && modalId() === null) { <div class="alert alert-error">{{ error() }}</div> }
+
+<!-- Bộ lọc -->
+<div class="toolbar">
+  <div class="search-box">
+    <lucide-angular [img]="SearchIcon" [size]="16" class="search-icon" />
+    <input placeholder="Tìm mã hoặc tên voucher..."
+           [ngModel]="keyword()" (ngModelChange)="onKeyword($event)" />
+  </div>
+
+  <select [ngModel]="tab()" (ngModelChange)="onTab($event)">
+    <option value="ALL">Tất cả</option>
+    <option value="ACTIVE">Đang chạy</option>
+    <option value="ENDED">Đã kết thúc</option>
+  </select>
+</div>
+
+<!-- Bảng -->
+<div class="table-container">
+  @if (loading() && !vouchers().length) {
+    <div class="status-state">Đang tải voucher...</div>
+  } @else if (!filtered().length) {
+    <div class="status-state">Chưa có voucher nào.</div>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Mã</th>
+          <th>Tên</th>
+          <th>Loại Giảm</th>
+          <th>Giá Trị</th>
+          <th>Đơn Tối Thiểu</th>
+          <th>Đã Dùng / Tổng</th>
+          <th>Hiệu Lực</th>
+          <th>Trạng Thái</th>
+          <th class="text-right">Thao Tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (v of paged(); track v.id) {
+          <tr>
+            <td class="cell-bold">{{ v.code }}</td>
+            <td>{{ v.name }}</td>
+            <td>{{ typeLabel[v.discountType] }}</td>
+            <td>
+              @switch (v.discountType) {
+                @case ('PERCENTAGE') {
+                  {{ v.discountValue }}%
+                  @if (v.maxDiscountAmount) { <span class="cell-muted"> (tối đa {{ v.maxDiscountAmount | number }}đ)</span> }
+                }
+                @case ('FIXED_AMOUNT') { {{ v.discountValue | number }}đ }
+                @default { — }
+              }
+            </td>
+            <td>{{ v.minOrderAmount | number }}đ</td>
+            <td>{{ v.usedCount }} / {{ v.totalQuantity ?? '∞' }}</td>
+            <td class="cell-muted">
+              {{ v.usableFrom | date:'dd/MM/yy' }} – {{ v.usableTo | date:'dd/MM/yy' }}
+            </td>
+            <td><span [class]="statusClass(v.status)">{{ statusLabel[v.status] }}</span></td>
+            <td class="text-right">
+              <div class="actions">
+                @if (v.status !== 'ENDED') {
+                  <button class="icon-btn" (click)="toggleStatus(v)"
+                          [title]="v.status === 'ACTIVE' ? 'Tạm dừng' : 'Kích hoạt'">
+                    <lucide-angular [img]="v.status === 'ACTIVE' ? PauseIcon : PlayIcon" [size]="15" />
+                  </button>
+                }
+                <button class="icon-btn" (click)="openEdit(v)" title="Sửa">
+                  <lucide-angular [img]="EditIcon" [size]="15" />
+                </button>
+                <button class="icon-btn" (click)="remove(v)" title="Xoá">
+                  <lucide-angular [img]="DeleteIcon" [size]="15" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <app-pagination [currentPage]="page()" [pageSize]="pageSize"
+                    [totalItems]="filtered().length" (pageChange)="page.set($event)" />
+  }
+</div>
+
+<!-- Modal tạo / sửa -->
+@if (modalId() !== null) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal-box modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ modalId() === 0 ? 'Tạo Voucher' : 'Sửa Voucher' }}</h3>
+        <button class="icon-btn" (click)="closeModal()"><lucide-angular [img]="XIcon" [size]="18" /></button>
+      </div>
+
+      @if (error()) { <div class="alert alert-error">{{ error() }}</div> }
+
+      <div class="modal-body">
+        <div class="grid-2">
+          <div class="field">
+            <label>Mã voucher *</label>
+            <input [ngModel]="form().code" (ngModelChange)="patch('code', $event)" placeholder="VD: SALE50K" />
+          </div>
+          <div class="field">
+            <label>Tên chương trình *</label>
+            <input [ngModel]="form().name" (ngModelChange)="patch('name', $event)" placeholder="Giảm 50K đơn từ 300K" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Mô tả</label>
+          <input [ngModel]="form().description" (ngModelChange)="patch('description', $event)" placeholder="Hiển thị cho khách" />
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>Loại giảm *</label>
+            <select [ngModel]="form().discountType" (ngModelChange)="patch('discountType', $event)">
+              <option value="FIXED_AMOUNT">Giảm số tiền</option>
+              <option value="PERCENTAGE">Giảm theo %</option>
+              <option value="FREE_SHIPPING">Miễn phí ship</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>{{ form().discountType === 'PERCENTAGE' ? 'Phần trăm giảm (%)' : 'Số tiền giảm (đ)' }}</label>
+            <input type="number" min="0"
+                   [ngModel]="form().discountValue"
+                   (ngModelChange)="patch('discountValue', +$event)"
+                   [disabled]="form().discountType === 'FREE_SHIPPING'" />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          @if (form().discountType === 'PERCENTAGE') {
+            <div class="field">
+              <label>Giảm tối đa (đ)</label>
+              <input type="number" min="0"
+                     [ngModel]="form().maxDiscountAmount"
+                     (ngModelChange)="patch('maxDiscountAmount', $event === '' ? null : +$event)"
+                     placeholder="Bỏ trống = không giới hạn" />
+            </div>
+          }
+          <div class="field">
+            <label>Giá trị đơn tối thiểu (đ)</label>
+            <input type="number" min="0"
+                   [ngModel]="form().minOrderAmount"
+                   (ngModelChange)="patch('minOrderAmount', +$event)" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Tổng lượt dùng</label>
+          <input type="number" min="1"
+                 [ngModel]="form().totalQuantity"
+                 (ngModelChange)="patch('totalQuantity', $event === '' ? null : +$event)"
+                 placeholder="Bỏ trống = không giới hạn" />
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>Bắt đầu *</label>
+            <input type="datetime-local" [ngModel]="form().usableFrom" (ngModelChange)="patch('usableFrom', $event)" />
+          </div>
+          <div class="field">
+            <label>Kết thúc *</label>
+            <input type="datetime-local" [ngModel]="form().usableTo" (ngModelChange)="patch('usableTo', $event)" />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn btn-outline" (click)="closeModal()">Hủy</button>
+        <button class="btn btn-black" (click)="save()" [disabled]="loading()">
+          {{ loading() ? 'Đang lưu...' : 'Lưu' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

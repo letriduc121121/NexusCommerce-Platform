@@ -1,0 +1,240 @@
+<!-- Hero Banner Section -->
+<section class="hero" id="hero">
+  <div class="hero-bg" style="background-image: url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=1920');"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <span class="hero-subtitle">HỆ THỐNG THIẾT BỊ ĐIỆN TỬ &amp; CÔNG NGHỆ 2026</span>
+    <h1 class="hero-title">Đột Phá Công Nghệ <br /> &amp; Thiết Bị Tương Lai</h1>
+    <p class="hero-desc">
+      Khám phá hệ sinh thái máy tính, điện thoại di động, thiết bị âm thanh đỉnh cao và phụ kiện công nghệ chính hãng hàng đầu tại AULA SHOP.
+    </p>
+    <div class="hero-actions">
+      <a href="#products" class="btn btn-primary">
+        Khám Phá Sản Phẩm
+        <lucide-angular [img]="ArrowRightIcon" [size]="18"></lucide-angular>
+      </a>
+      <a href="#about" class="btn btn-outline">Về AULA SHOP</a>
+    </div>
+  </div>
+</section>
+
+<!-- Brand Features Grid -->
+<section class="features-section" id="features">
+  <div class="container grid-features">
+    @for (item of features(); track item.title) {
+      <div class="feature-card">
+        <div class="feature-icon">
+          <lucide-angular [img]="item.icon" [size]="24"></lucide-angular>
+        </div>
+        <div class="feature-info">
+          <h4 class="feature-title">{{ item.title }}</h4>
+          <p class="feature-desc">{{ item.desc }}</p>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- Voucher Section -->
+@if (vouchers().length) {
+  <section class="voucher-section">
+    <div class="container">
+      <h3 class="voucher-heading">
+        <lucide-angular [img]="TicketIcon" [size]="18" /> Mã Giảm Giá
+      </h3>
+      <div class="voucher-list">
+        @for (v of vouchers(); track v.id) {
+          <div class="voucher-card">
+            <div class="voucher-info">
+              <strong>{{ v.name }}</strong>
+              <span>
+                @if (v.discountType === 'PERCENTAGE') { Giảm {{ v.discountValue }}%<span> tối đa {{ v.maxDiscountAmount | currency:'VND':'symbol-narrow':'1.0-0' }}</span> }
+                @else if (v.discountType === 'FIXED_AMOUNT') { Giảm {{ v.discountValue | currency:'VND':'symbol-narrow':'1.0-0' }} }
+                @else { Miễn phí vận chuyển }
+              </span>
+              <span class="voucher-cond">
+                @if (v.minOrderAmount > 0) { Đơn từ {{ v.minOrderAmount | currency:'VND':'symbol-narrow':'1.0-0' }} · }
+                HSD {{ v.usableTo | date:'dd/MM/yyyy' }}
+              </span>
+            </div>
+            <button class="voucher-copy" (click)="copyCode(v.code)">
+              <lucide-angular [img]="CopyIcon" [size]="14" /> {{ v.code }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+}
+
+<!-- Products Section -->
+<section class="products-section" id="products">
+  <div class="container">
+    <div class="section-header">
+      <div class="header-titles">
+        <span class="section-subtitle">SẢN PHẨM</span>
+        <h2 class="section-title">Danh Sách Sản Phẩm</h2>
+      </div>
+
+      <!-- Search Input Container -->
+      <div class="search-box">
+        <lucide-angular [img]="SearchIcon" [size]="18" class="search-icon"></lucide-angular>
+        <input
+          type="text"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Tìm sản phẩm (vd: iPhone, Laptop, Tai nghe...)"
+          class="search-input"
+        />
+        @if (searchQuery()) {
+          <button class="clear-search-btn" (click)="clearSearch()" type="button" aria-label="Xóa tìm kiếm">
+            <lucide-angular [img]="XIcon" [size]="16"></lucide-angular>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="category-filter">
+      <button
+        class="filter-btn"
+        [class.active]="selectedCategoryId() === null"
+        (click)="selectCategory(null)"
+      >
+        Tất cả danh mục
+      </button>
+      @for (cat of categories(); track cat.id) {
+        <button
+          class="filter-btn"
+          [class.active]="selectedCategoryId() === cat.id"
+          (click)="selectCategory(cat.id)"
+        >
+          {{ cat.name }}
+        </button>
+      }
+    </div>
+
+    <!-- Price Filter & Sort Toolbar -->
+    <div class="filter-controls">
+      <div class="price-filter-row">
+        <span class="filter-label">
+          <lucide-angular [img]="SlidersIcon" [size]="14"></lucide-angular>
+          Khoảng giá:
+        </span>
+        <div class="price-pills">
+          @for (range of priceRanges; track range.label) {
+            <button
+              class="price-pill"
+              [class.active]="selectedPriceRange().label === range.label"
+              (click)="selectPriceRange(range)"
+              type="button"
+            >
+              {{ range.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="sort-selector">
+        <span class="sort-label">
+          <lucide-angular [img]="SortIcon" [size]="14"></lucide-angular>
+          Sắp xếp:
+        </span>
+        <select
+          [ngModel]="sortOption()"
+          (ngModelChange)="setSortOption($event)"
+          class="sort-select"
+        >
+          <option value="default">Mặc định</option>
+          <option value="price-asc">Giá: Thấp → Cao</option>
+          <option value="price-desc">Giá: Cao → Thấp</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Active Filters Badge -->
+    @if (hasActiveFilters()) {
+      <div class="search-result-info">
+        <span>
+          Tìm thấy <strong>{{ totalProducts() }}</strong> sản phẩm
+          @if (searchQuery()) { với từ khóa <strong>"{{ searchQuery() }}"</strong> }
+          @if (selectedPriceRange().label !== 'Tất cả giá') { (Giá: <strong>{{ selectedPriceRange().label }}</strong>) }
+        </span>
+        <button class="reset-link" (click)="resetAllFilters()">Xóa bộ lọc</button>
+      </div>
+    }
+
+    @if (isLoadingProducts()) {
+      <div class="empty-state text-center">
+        <p>Đang tải sản phẩm...</p>
+      </div>
+    } @else if (filteredProducts().length === 0) {
+      <div class="empty-state text-center">
+        <p>Không tìm thấy sản phẩm nào phù hợp với bộ lọc hiện tại.</p>
+        @if (hasActiveFilters()) {
+          <button class="btn-clear-filter" (click)="resetAllFilters()">Xóa tất cả bộ lọc</button>
+        }
+      </div>
+    } @else {
+      <div class="products-grid">
+        @for (product of filteredProducts(); track product.id) {
+          <div class="product-card" [routerLink]="['/products', product.id]">
+            <div class="product-img-wrapper">
+              <img [src]="product.imageUrl || 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?auto=format&fit=crop&q=80&w=600'" [alt]="product.name" class="product-img" />
+            </div>
+
+            <div class="product-info">
+              <span class="product-category">{{ product.category?.name || 'Sản phẩm' }}</span>
+              <h3 class="product-name">{{ product.name }}</h3>
+              <div class="product-price-box">
+                <span class="price-current">{{ product.price | currency:'VND':'symbol-narrow':'1.0-0' }}</span>
+              </div>
+            </div>
+
+            <div class="card-actions-row">
+              <button
+                class="btn-cart"
+                (click)="addToCart(product, $event)"
+                [disabled]="product.status !== 'ACTIVE' || addingProductId() === product.id"
+              >
+                <lucide-angular [img]="ShoppingBagIcon" [size]="16"></lucide-angular>
+                {{ addingProductId() === product.id ? 'Đang thêm...' : 'Thêm giỏ hàng' }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Pagination -->
+      <app-pagination
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize()"
+        [totalItems]="totalProducts()"
+        (pageChange)="goToPage($event)"
+      ></app-pagination>
+    }
+  </div>
+</section>
+
+<!-- About Brand Landing Section -->
+<section class="about-landing-section" id="about">
+  <div class="container">
+    <div class="grid-history">
+      <div class="history-text">
+        <span class="section-subtitle">VỀ THƯƠNG HIỆU AULA SHOP</span>
+        <h2 class="section-title">Hành Trình Đột Phá Công Nghệ</h2>
+        <p>
+          Thương hiệu <strong>AULA SHOP</strong> được thành lập với mục tiêu mang đến các thiết bị điện tử, laptop, smartphone, thiết bị âm thanh &amp; đồ dùng thông minh cao cấp chính hãng tới tay người tiêu dùng Việt Nam.
+        </p>
+        <p>
+          Chúng tôi tự hào hợp tác trực tiếp với các tập đoàn công nghệ hàng đầu thế giới (Apple, Sony, Samsung, Asus, Dell, Marshall) để cung cấp sản phẩm chuẩn mực cùng chế độ bảo hành 1 đổi 1 ưu việt nhất.
+        </p>
+      </div>
+      <div class="history-image">
+        <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800" alt="Showroom công nghệ AULA SHOP" />
+      </div>
+    </div>
+  </div>
+</section>
+
+

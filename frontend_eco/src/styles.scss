@@ -1,0 +1,49 @@
+// ---------------------------------------------------------------------------
+// Global Styles - Atelier Editorial (TALAVADZE)
+// ---------------------------------------------------------------------------
+@use 'styles/variables' as v;
+@use 'styles/mixins' as m;
+@use 'styles/reset';
+@use 'styles/typography';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: v.$color-background;
+  color: v.$color-on-surface;
+  overflow-x: hidden;
+}
+
+.container {
+  @include m.container;
+}
+
+/* Common Utilities */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: v.$color-espresso;
+  color: v.$color-on-primary;
+  padding: v.$spacing-sm v.$spacing-lg;
+  border: none;
+  font-family: v.$font-family-sans;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: v.$color-primary;
+  }
+}

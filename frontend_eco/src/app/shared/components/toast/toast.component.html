@@ -1,0 +1,30 @@
+<div class="toast-container" aria-live="polite">
+  @for (toast of toastService.toasts(); track toast.id) {
+    <div class="toast-item" [class]="'toast-' + toast.type">
+      <div class="toast-icon">
+        @if (toast.type === 'success') {
+          <lucide-angular [img]="CheckIcon" [size]="20" />
+        } @else if (toast.type === 'warning') {
+          <lucide-angular [img]="AlertIcon" [size]="20" />
+        } @else if (toast.type === 'error') {
+          <lucide-angular [img]="ErrorIcon" [size]="20" />
+        } @else {
+          <lucide-angular [img]="InfoIcon" [size]="20" />
+        }
+      </div>
+
+      <div class="toast-content">
+        @if (toast.title) {
+          <h4 class="toast-title">{{ toast.title }}</h4>
+        }
+        @if (toast.message) {
+          <p class="toast-message">{{ toast.message }}</p>
+        }
+      </div>
+
+      <button type="button" class="toast-close" (click)="remove(toast.id)" aria-label="Đóng">
+        <lucide-angular [img]="XIcon" [size]="16" />
+      </button>
+    </div>
+  }
+</div>

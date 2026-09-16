@@ -1,0 +1,89 @@
+<div class="orders-section">
+  <div class="section-header">
+    <h2 class="title">Lịch Sử Đơn Hàng</h2>
+    <p class="subtitle">Theo dõi trạng thái giao hàng và danh sách các sản phẩm bạn đã mua</p>
+  </div>
+
+  @if (orders().length === 0) {
+    <div class="empty-orders">
+      <lucide-angular [img]="PackageIcon" [size]="48" class="empty-icon"></lucide-angular>
+      <p>Bạn chưa có đơn hàng nào.</p>
+    </div>
+  } @else {
+    <div class="orders-list">
+      @for (order of orders(); track order.id) {
+        <div class="order-card">
+          <div class="order-header">
+            <div class="order-meta">
+              <span class="order-code">Mã đơn: <strong>#{{ order.id.slice(0, 8) }}</strong></span>
+              <span class="order-date">
+                <lucide-angular [img]="CalendarIcon" [size]="14"></lucide-angular>
+                {{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}
+              </span>
+            </div>
+            <div class="order-status" [class]="getStatusClass(order.status)">
+              @if (order.status === 'DELIVERED') {
+                <lucide-angular [img]="CheckCircleIcon" [size]="14"></lucide-angular>
+              } @else if (order.status === 'SHIPPING') {
+                <lucide-angular [img]="TruckIcon" [size]="14"></lucide-angular>
+              } @else {
+                <lucide-angular [img]="ClockIcon" [size]="14"></lucide-angular>
+              }
+              <span>{{ getStatusLabel(order.status) }}</span>
+            </div>
+          </div>
+
+          <div class="order-items">
+            @for (item of order.orderItems; track item.id) {
+              <div class="order-item">
+                <div class="item-details">
+                  <h4 class="item-name">{{ item.productName }}</h4>
+                  <p class="item-price-qty">
+                    {{ item.price | currency:'VND':'symbol-narrow':'1.0-0' }} x {{ item.quantity }}
+                  </p>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="order-footer">
+            <div class="payment-method">
+              @if (order.shippingAddress) {
+                <span>Giao tới: {{ order.shippingAddress }}</span>
+              }
+              @if (order.voucherCode) {
+                <span class="voucher-tag">Mã giảm giá: {{ order.voucherCode }}
+                  (−{{ order.discountAmount | currency:'VND':'symbol-narrow':'1.0-0' }})</span>
+              }
+            </div>
+            <div class="total-price-box">
+              <span class="total-label">Tổng tiền:</span>
+              <span class="total-amount">{{ order.totalAmount | currency:'VND':'symbol-narrow':'1.0-0' }}</span>
+            </div>
+          </div>
+
+          @if (canCancel(order)) {
+            <div class="order-actions">
+              <button class="btn-cancel" (click)="requestCancel(order)">
+                <lucide-angular [img]="XIcon" [size]="14"></lucide-angular>
+                Huỷ đơn hàng
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<app-modal
+  [isOpen]="cancelTarget() !== null"
+  type="danger"
+  title="Xác Nhận Huỷ Đơn Hàng"
+  [message]="'Bạn có chắc chắn muốn huỷ đơn #' + (cancelTarget()?.id?.slice(0, 8)?.toUpperCase() || '') + '?\nThao tác này không thể hoàn tác.'"
+  confirmText="Huỷ Đơn"
+  cancelText="Đóng"
+  [isLoading]="isCancelling()"
+  (confirm)="confirmCancel()"
+  (close)="cancelTarget.set(null)"
+/>

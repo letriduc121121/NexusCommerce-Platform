@@ -1,0 +1,164 @@
+<div class="overview-page">
+  <div class="page-title-box">
+    <h1 class="page-title">Tổng Quan Thống Kê</h1>
+    <p class="page-subtitle">Dữ liệu tài khoản người dùng trực tiếp từ máy chủ API Gateway</p>
+  </div>
+
+  <!-- Thẻ Thống Kê -->
+  <div class="stats-grid">
+    <div class="stat-card stat-alert" [class.has-pending]="notifications.pendingCount() > 0">
+      <div class="stat-icon">
+        <lucide-angular [img]="PackageIcon" [size]="22"></lucide-angular>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Đơn Chờ Duyệt</span>
+        <h3 class="stat-value">{{ notifications.pendingCount() }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <lucide-angular [img]="UsersIcon" [size]="22"></lucide-angular>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Tổng Người Dùng</span>
+        <h3 class="stat-value">{{ totalUsers() }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <lucide-angular [img]="ShieldIcon" [size]="22"></lucide-angular>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Quản Trị Viên (ADMIN)</span>
+        <h3 class="stat-value">{{ adminCount() }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <lucide-angular [img]="CheckCircleIcon" [size]="22"></lucide-angular>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Tài Khoản Hoạt Động</span>
+        <h3 class="stat-value">{{ activeCount() }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <lucide-angular [img]="LockIcon" [size]="22"></lucide-angular>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Tài Khoản Bị Khóa</span>
+        <h3 class="stat-value">{{ lockedCount() }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Đơn Hàng Chờ Duyệt (đồng bộ realtime cùng chuông thông báo) -->
+  <div class="overview-section">
+    <div class="section-header">
+      <h3 class="section-title">
+        Đơn Hàng Chờ Duyệt
+        <i class="live-dot" [class.is-off]="!notifications.connected()"></i>
+      </h3>
+      <a routerLink="/admin/orders" [queryParams]="{ status: 'PENDING' }" class="link-more">
+        Xem tất cả đơn hàng <lucide-angular [img]="ArrowRightIcon" [size]="14"></lucide-angular>
+      </a>
+    </div>
+
+    <div class="table-card">
+      @if (recentPendingOrders().length === 0) {
+        <div class="status-box empty-box">
+          <lucide-angular [img]="InboxIcon" [size]="26"></lucide-angular>
+          <span>Tất cả đơn hàng đã được xử lý.</span>
+        </div>
+      } @else {
+        <table class="simple-table">
+          <thead>
+            <tr>
+              <th>Mã Đơn</th>
+              <th>Khách Hàng</th>
+              <th>Sản Phẩm</th>
+              <th>Tổng Tiền</th>
+              <th>Thanh Toán</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of recentPendingOrders(); track order.orderId) {
+              <tr class="clickable" (click)="openOrder(order.orderId)">
+                <td class="font-medium">
+                  @if (notifications.isUnseen(order.orderId)) { <i class="new-dot"></i> }
+                  {{ shortId(order.orderId) }}
+                </td>
+                <td>{{ order.customerName }}</td>
+                <td>{{ order.itemCount }}</td>
+                <td class="font-medium">{{ order.totalAmount | number: '1.0-0' }} ₫</td>
+                <td>
+                  <span class="tag-pay" [class.is-paid]="order.paymentStatus === 'PAID'">
+                    {{ order.paymentMethod }} · {{ order.paymentStatus }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  <lucide-angular [img]="ArrowRightIcon" [size]="15"></lucide-angular>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+
+  <!-- Người Dùng Mới Gần Đây -->
+  <div class="overview-section">
+    <div class="section-header">
+      <h3 class="section-title">Người Dùng Mới Nhất</h3>
+      <a routerLink="/admin/users" class="link-more">
+        Xem tất cả người dùng <lucide-angular [img]="ArrowRightIcon" [size]="14"></lucide-angular>
+      </a>
+    </div>
+
+    <div class="table-card">
+      @if (isLoading()) {
+        <div class="status-box">Đang nạp dữ liệu...</div>
+      } @else if (recentUsers().length === 0) {
+        <div class="status-box">Chưa có người dùng nào.</div>
+      } @else {
+        <table class="simple-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Họ và Tên</th>
+              <th>Số Điện Thoại</th>
+              <th>Vai Trò</th>
+              <th>Trạng Thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of recentUsers(); track user.id) {
+              <tr>
+                <td class="font-medium">{{ user.email }}</td>
+                <td>{{ user.fullName || '—' }}</td>
+                <td>{{ user.phone || '—' }}</td>
+                <td>
+                  <span class="tag-role" [class.is-admin]="user.role === 'ADMIN'">
+                    {{ user.role }}
+                  </span>
+                </td>
+                <td>
+                  <span class="tag-status" [class.is-locked]="user.status === 'LOCKED'">
+                    {{ user.status }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+</div>

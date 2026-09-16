@@ -1,0 +1,239 @@
+<header class="site-header" [class.is-scrolled]="isScrolled()">
+  <div class="header-container">
+    <!-- Nút Menu trên Mobile -->
+    <button class="icon-button mobile-menu-toggle" (click)="toggleMobileMenu()" aria-label="Mở menu">
+      @if (isMobileMenuOpen()) {
+        <lucide-angular [img]="XIcon" [size]="22"></lucide-angular>
+      } @else {
+        <lucide-angular [img]="MenuIcon" [size]="22"></lucide-angular>
+      }
+    </button>
+
+    <!-- Logo Chữ -->
+    <a (click)="scrollToSection('hero')" class="brand-logo">
+      AULA SHOP
+    </a>
+
+    <!-- Menu Điều Hướng Desktop (Landing Page Smooth Scroll) -->
+    <nav class="desktop-nav">
+      <a (click)="scrollToSection('hero')" class="nav-link">Trang Chủ</a>
+      <a (click)="scrollToSection('products')" class="nav-link">Sản Phẩm</a>
+      <a (click)="scrollToSection('about')" class="nav-link">Giới Thiệu</a>
+    </nav>
+
+    <!-- Các Nút Thao Tác Header -->
+    <div class="header-actions">
+      <!-- Nút Quản Trị Admin (Nằm sát nút profile cá nhân, không bị vỡ layout) -->
+      @if (authService.isAdmin()) {
+        <a routerLink="/admin/dashboard" class="admin-btn" title="Trang Quản Trị Admin">
+          <lucide-angular [img]="ShieldIcon" [size]="16"></lucide-angular>
+          <span>Admin</span>
+        </a>
+      }
+
+      <!-- User Profile Dropdown Toggle -->
+      <div class="profile-menu-container">
+        <button class="icon-button profile-toggle-btn" (click)="toggleProfileMenu()" aria-label="Tài khoản cá nhân">
+          <lucide-angular [img]="UserIcon" [size]="20"></lucide-angular>
+          @if (authService.isLoggedIn() && authService.currentUser()) {
+            <span class="user-name-preview">
+              {{ authService.currentUser()?.fullName || authService.currentUser()?.email }}
+            </span>
+          }
+          <lucide-angular [img]="ChevronDownIcon" [size]="14" class="chevron-icon"></lucide-angular>
+        </button>
+
+        <!-- Dropdown Menu Cá Nhân -->
+        @if (isProfileMenuOpen()) {
+          <div class="dropdown-backdrop" (click)="closeProfileMenu()"></div>
+          <div class="profile-dropdown-menu">
+            @if (authService.isLoggedIn()) {
+              <div class="dropdown-header">
+                <div class="user-info">
+                  <p class="user-fullname">{{ authService.currentUser()?.fullName || 'Thành viên' }}</p>
+                  <p class="user-email">{{ authService.currentUser()?.email }}</p>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              @if (authService.isAdmin()) {
+                <a routerLink="/admin/dashboard" (click)="closeProfileMenu()" class="dropdown-item admin-item">
+                  <lucide-angular [img]="ShieldIcon" [size]="18"></lucide-angular>
+                  <span>Quản lý người dùng (Admin)</span>
+                </a>
+              }
+              <a routerLink="/profile" (click)="closeProfileMenu()" class="dropdown-item">
+                <lucide-angular [img]="UserCheckIcon" [size]="18"></lucide-angular>
+                <span>Thông tin cá nhân</span>
+              </a>
+              <a routerLink="/profile/orders" (click)="closeProfileMenu()" class="dropdown-item">
+                <lucide-angular [img]="PackageIcon" [size]="18"></lucide-angular>
+                <span>Lịch sử đơn hàng</span>
+              </a>
+              <div class="dropdown-divider"></div>
+              <button (click)="logout()" class="dropdown-item logout-btn">
+                <lucide-angular [img]="LogOutIcon" [size]="18"></lucide-angular>
+                <span>Đăng xuất</span>
+              </button>
+            } @else {
+              <a routerLink="/login" (click)="closeProfileMenu()" class="dropdown-item">
+                <lucide-angular [img]="LogInIcon" [size]="18"></lucide-angular>
+                <span>Đăng nhập</span>
+              </a>
+              <a routerLink="/register" (click)="closeProfileMenu()" class="dropdown-item">
+                <lucide-angular [img]="UserIcon" [size]="18"></lucide-angular>
+                <span>Đăng ký tài khoản</span>
+              </a>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Giỏ Hàng -->
+      <button class="icon-button cart-button" (click)="toggleCartSidebar()" aria-label="Giỏ hàng">
+        <lucide-angular [img]="ShoppingBagIcon" [size]="20"></lucide-angular>
+        <span class="cart-badge">{{ cartItemCount() }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Cart Sidebar Popup -->
+  @if (showCartSidebar()) {
+    <div class="cart-overlay" (click)="closeCartSidebar()"></div>
+    <div class="cart-sidebar">
+      <div class="cart-header">
+        <div class="header-title">
+          <lucide-angular [img]="ShoppingCartIcon" [size]="20"></lucide-angular>
+          <h3>Giỏ Hàng ({{ cartItemCount() }})</h3>
+        </div>
+        <button class="close-btn" (click)="closeCartSidebar()" aria-label="Đóng">
+          <lucide-angular [img]="XIcon" [size]="20"></lucide-angular>
+        </button>
+      </div>
+
+      @if (cartService.cart()?.items?.length) {
+        <div class="cart-items">
+          @for (item of cartService.cart()!.items; track (item.productId || item.id)) {
+            <div class="cart-item" [class.is-loading]="loadingProductId() === (item.productId || item.id)">
+              <div class="item-thumb">
+                @if (item.imageUrl) {
+                  <img [src]="item.imageUrl" [alt]="item.productName" />
+                } @else {
+                  <div class="thumb-placeholder">
+                    <lucide-angular [img]="PackageIcon" [size]="24"></lucide-angular>
+                  </div>
+                }
+              </div>
+
+              <div class="item-info">
+                <div class="item-header">
+                  <h4 class="item-name" [title]="item.productName">{{ item.productName }}</h4>
+                  <button
+                    class="remove-btn"
+                    (click)="removeItem(item)"
+                    [disabled]="loadingProductId() === (item.productId || item.id)"
+                    title="Xóa"
+                  >
+                    <lucide-angular [img]="Trash2Icon" [size]="16"></lucide-angular>
+                  </button>
+                </div>
+
+                <div class="item-price-unit">
+                  {{ item.price | currency:'VND':'symbol-narrow':'1.0-0' }}
+                </div>
+
+                <div class="item-bottom">
+                  <div class="qty-control">
+                    <button (click)="updateQuantity(item, -1)" [disabled]="loadingProductId() === (item.productId || item.id)">
+                      <lucide-angular [img]="MinusIcon" [size]="12"></lucide-angular>
+                    </button>
+                    <span class="qty-value">{{ item.quantity }}</span>
+                    <button (click)="updateQuantity(item, 1)" [disabled]="loadingProductId() === (item.productId || item.id)">
+                      <lucide-angular [img]="PlusIcon" [size]="12"></lucide-angular>
+                    </button>
+                  </div>
+
+                  <div class="item-subtotal">
+                    {{ (item.subtotal || (item.price * item.quantity)) | currency:'VND':'symbol-narrow':'1.0-0' }}
+                  </div>
+                </div>
+              </div>
+
+              @if (loadingProductId() === (item.productId || item.id)) {
+                <div class="item-spinner-overlay">
+                  <lucide-angular [img]="Loader2Icon" [size]="18" class="spin-icon"></lucide-angular>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="cart-summary">
+          <div class="summary-row">
+            <span>Tổng số sản phẩm:</span>
+            <strong>{{ cartItemCount() }}</strong>
+          </div>
+          <div class="summary-row total-row">
+            <span>Tổng tiền:</span>
+            <span class="total-amount">{{ cartService.totalAmount() | currency:'VND':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+        </div>
+
+        <div class="cart-footer">
+          <button class="btn-checkout" (click)="goToCheckout()">
+            <lucide-angular [img]="ShoppingBagIcon" [size]="18"></lucide-angular>
+            <span>Đặt Hàng / Thanh Toán</span>
+          </button>
+          <button class="btn-clear" (click)="clearCart()" [disabled]="isClearingCart()">
+            <lucide-angular [img]="Trash2Icon" [size]="16"></lucide-angular>
+            <span>Xóa Tất Cả</span>
+          </button>
+          <button class="btn-close" (click)="closeCartSidebar()">Đóng</button>
+        </div>
+      } @else {
+        <div class="cart-empty">
+          <div class="empty-icon-wrapper">
+            <lucide-angular [img]="ShoppingBagIcon" [size]="48"></lucide-angular>
+          </div>
+          <h4>Giỏ hàng của bạn đang trống</h4>
+          <p>Hãy khám phá các sản phẩm tuyệt vời của AULA SHOP!</p>
+          <button class="btn-shop-now" (click)="scrollToSection('products'); closeCartSidebar()">
+            Khám Phá Sản Phẩm
+          </button>
+        </div>
+        <div class="cart-footer">
+          <button class="btn-close" (click)="closeCartSidebar()">Đóng</button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Mobile Drawer Menu -->
+  @if (isMobileMenuOpen()) {
+    <div class="mobile-menu-overlay" (click)="closeMobileMenu()"></div>
+    <nav class="mobile-nav">
+      <a (click)="scrollToSection('hero')" class="mobile-nav-link">Trang Chủ</a>
+      <a (click)="scrollToSection('products')" class="mobile-nav-link">Sản Phẩm</a>
+      <a (click)="scrollToSection('about')" class="mobile-nav-link">Giới Thiệu</a>
+      @if (authService.isAdmin()) {
+        <a routerLink="/admin/dashboard" (click)="closeMobileMenu()" class="mobile-nav-link admin-nav-link">
+          <lucide-angular [img]="ShieldIcon" [size]="18"></lucide-angular> Quản Lý Admin
+        </a>
+      }
+      <div class="mobile-nav-divider"></div>
+      @if (authService.isLoggedIn()) {
+        <a routerLink="/profile" (click)="closeMobileMenu()" class="mobile-nav-link">
+          <lucide-angular [img]="UserCheckIcon" [size]="18"></lucide-angular> Thông tin cá nhân
+        </a>
+        <a routerLink="/profile/orders" (click)="closeMobileMenu()" class="mobile-nav-link">
+          <lucide-angular [img]="PackageIcon" [size]="18"></lucide-angular> Lịch sử đơn hàng
+        </a>
+        <button (click)="logout()" class="mobile-nav-link logout-btn">
+          <lucide-angular [img]="LogOutIcon" [size]="18"></lucide-angular> Đăng xuất
+        </button>
+      } @else {
+        <a routerLink="/login" (click)="closeMobileMenu()" class="mobile-nav-link">Đăng Nhập</a>
+        <a routerLink="/register" (click)="closeMobileMenu()" class="mobile-nav-link">Đăng Ký</a>
+      }
+    </nav>
+  }
+</header>

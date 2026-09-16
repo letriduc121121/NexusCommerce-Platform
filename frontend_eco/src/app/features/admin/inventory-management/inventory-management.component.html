@@ -1,0 +1,113 @@
+<div class="page-topbar">
+  <div>
+    <h1 class="page-title">Quản Lý Tồn Kho</h1>
+    <p class="page-subtitle">Cập nhật số lượng tồn kho, giám sát hàng sắp hết</p>
+  </div>
+</div>
+
+@if (success()) { <div class="alert alert-success">{{ success() }}</div> }
+@if (error() && !editing()) { <div class="alert alert-error">{{ error() }}</div> }
+
+<!-- Bộ lọc -->
+<div class="toolbar">
+  <div class="search-box">
+    <lucide-angular [img]="SearchIcon" [size]="16" class="search-icon" />
+    <input placeholder="Tìm sản phẩm hoặc mã ID..."
+           [ngModel]="keyword()" (ngModelChange)="filter($event, stockFilter())" />
+  </div>
+
+  <select [ngModel]="stockFilter()" (ngModelChange)="filter(keyword(), $event)">
+    <option value="ALL">Tất cả sản phẩm</option>
+    <option value="LOW">Sắp hết (&lt;{{ lowStock }})</option>
+    <option value="OUT">Hết hàng</option>
+  </select>
+
+  <button class="btn btn-outline" (click)="load()">
+    <lucide-angular [img]="RefreshIcon" [size]="15" /> Làm Mới
+  </button>
+</div>
+
+<!-- Bảng -->
+<div class="table-container">
+  @if (loading() && !items().length) {
+    <div class="status-state">Đang tải tồn kho...</div>
+  } @else if (!filtered().length) {
+    <div class="status-state">Không có sản phẩm nào phù hợp.</div>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Ảnh</th>
+          <th>Sản Phẩm</th>
+          <th>Mã ID</th>
+          <th>Tổng Số Lượng</th>
+          <th>Khả Dụng</th>
+          <th>Đang Giữ Chỗ</th>
+          <th>Trạng Thái</th>
+          <th class="text-right">Thao Tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (it of paged(); track it.productId) {
+          <tr>
+            <td><img [src]="it.imageUrl || 'https://placehold.co/40x40?text=N/A'" [alt]="it.productName" class="thumb" /></td>
+            <td class="cell-bold">{{ it.productName || '—' }}</td>
+            <td class="cell-muted">{{ it.productId.slice(0, 8) }}</td>
+            <td class="cell-bold">{{ it.quantity }}</td>
+            <td><span class="badge badge-success">{{ it.available }}</span></td>
+            <td><span class="badge badge-info">{{ it.reserved }}</span></td>
+            <td><span [class]="stockClass(it)">
+              @if (it.available === 0) { HẾT HÀNG }
+              @else if (it.available < lowStock) { SẮP HẾT }
+              @else { CÓ HÀNG }
+            </span></td>
+            <td class="text-right">
+              <button class="btn btn-sm btn-outline" (click)="openEdit(it)" title="Cập nhật tồn kho">
+                <lucide-angular [img]="EditIcon" [size]="14" /> Cập Nhật
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <app-pagination [currentPage]="page()" [pageSize]="pageSize"
+                    [totalItems]="filtered().length" (pageChange)="page.set($event)" />
+  }
+</div>
+
+<!-- Modal cập nhật -->
+@if (editing(); as it) {
+  <div class="modal-overlay" (click)="editing.set(null)">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>Cập Nhật Tồn Kho: {{ it.productName }}</h3>
+        <button class="icon-btn" (click)="editing.set(null)"><lucide-angular [img]="XIcon" [size]="18" /></button>
+      </div>
+
+      @if (error()) { <div class="alert alert-error">{{ error() }}</div> }
+
+      <div class="modal-body">
+        <div class="field">
+          <label>Số Lượng Tồn Kho Mới *</label>
+          <input type="number" min="0" [ngModel]="formQuantity()"
+                 (ngModelChange)="formQuantity.set(+$event)" placeholder="Nhập số lượng..." />
+          <span class="hint">
+            Tồn hiện tại: {{ it.quantity }} |
+            Đang giữ: {{ it.reserved }} |
+            Khả dụng: {{ it.available }} |
+            @if (delta() > 0) { <strong style="color: #15803d">+{{ delta() }}</strong> }
+            @else if (delta() < 0) { <strong style="color: #b91c1c">{{ delta() }}</strong> }
+          </span>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn btn-outline" (click)="editing.set(null)">Hủy</button>
+        <button class="btn btn-black" (click)="save()" [disabled]="loading()">
+          {{ loading() ? 'Đang lưu...' : 'Lưu Thay Đổi' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

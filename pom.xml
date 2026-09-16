@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.ecommerce</groupId>
+    <artifactId>ecommerce-microservice</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>ecommerce-microservice (aggregator)</name>
+    <description>
+        POM tổng hợp — CHỈ để IDE nạp tất cả service vào một cửa sổ dự án.
+        KHÔNG phải parent của các service (mỗi service vẫn kế thừa spring-boot-starter-parent riêng).
+        Docker build từng service độc lập, không dùng file này.
+    </description>
+
+    <modules>
+        <module>api-gateway</module>
+        <module>auth_service</module>
+        <module>product_service</module>
+        <module>order_service</module>
+        <module>payment_service</module>
+        <module>inventory_service</module>
+        <module>cart_service</module>
+        <module>notification_service</module>
+        <module>promotion_service</module>
+    </modules>
+</project>

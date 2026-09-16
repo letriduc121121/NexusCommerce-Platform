@@ -1,0 +1,45 @@
+@use 'variables' as v;
+
+body {
+  font-family: v.$font-family-sans;
+  font-size: 15px;
+  color: v.$color-on-surface;
+  background-color: v.$color-background;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-family: v.$font-family-serif;
+  font-weight: v.$font-weight-regular;
+  line-height: 1.15;
+  color: v.$color-primary;
+  text-transform: uppercase;
+}
+
+p {
+  margin: 0;
+}
+
+.font-serif {
+  font-family: v.$font-family-serif;
+}
+
+.font-sans {
+  font-family: v.$font-family-sans;
+}
+
+.text-tracking-widest {
+  letter-spacing: 0.2em;
+}
+
+.text-tracking-caps {
+  letter-spacing: 0.35em;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+  font-size: 22px;
+  vertical-align: middle;
+}

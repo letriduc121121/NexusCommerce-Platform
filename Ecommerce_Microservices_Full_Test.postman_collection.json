@@ -1,0 +1,1852 @@
+{
+	"info": {
+		"_postman_id": "ecom-microservices-full-test",
+		"name": "E-Commerce Microservices - Full API Test",
+		"description": "Bộ test Postman HOÀN CHỈNH cho hệ thống E-Commerce Microservices.\n\n## Kiến trúc Service\n- **Auth Service**: localhost:8080\n- **Product Service**: localhost:8081\n- **Order Service**: localhost:8082\n- **API Gateway**: localhost:8000\n\n## Cách sử dụng\n1. Chạy \"Login Admin\" hoặc \"Login User\" trước → Token được tự động lưu vào biến `admin_token` / `user_token`\n2. Các request sau sẽ tự dùng token từ biến\n3. Thay `<product_id>`, `<user_id>`, `<order_id>`, `<cart_item_id>` bằng ID thực tế\n\n## Tài khoản mặc định\n- Admin: admin@example.com / Admin123@\n- User: john@example.com / User123@",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "auth_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "product_url",
+			"value": "http://localhost:8081",
+			"type": "string"
+		},
+		{
+			"key": "order_url",
+			"value": "http://localhost:8082",
+			"type": "string"
+		},
+		{
+			"key": "gateway_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "admin_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "product_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "order_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "cart_item_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "category_id",
+			"value": "1",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "══════ 1. AUTH SERVICE (:8080) ══════",
+			"item": [
+				{
+					"name": "1.1 Authentication",
+					"item": [
+						{
+							"name": "✅ Register New User",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('user_token', jsonData.token);",
+											"    pm.collectionVariables.set('refresh_token', jsonData.refreshToken);",
+											"    pm.collectionVariables.set('user_id', jsonData.userId);",
+											"    pm.test('Register thành công', function () {",
+											"        pm.expect(jsonData.token).to.be.a('string');",
+											"        pm.expect(jsonData.username).to.be.a('string');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"username\": \"nguyenvantest\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Password1@abc\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/auth/register",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "auth", "register"]
+								}
+							}
+						},
+						{
+							"name": "✅ Login Admin (Auto-save token)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('admin_token', jsonData.token);",
+											"    pm.collectionVariables.set('refresh_token', jsonData.refreshToken);",
+											"    pm.test('Login Admin thành công', function () {",
+											"        pm.expect(jsonData.token).to.be.a('string');",
+											"        pm.expect(jsonData.roles).to.include('ADMIN');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123@\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/auth/login",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "auth", "login"]
+								}
+							}
+						},
+						{
+							"name": "✅ Login User (Auto-save token)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('user_token', jsonData.token);",
+											"    pm.collectionVariables.set('refresh_token', jsonData.refreshToken);",
+											"    pm.collectionVariables.set('user_id', jsonData.userId);",
+											"    pm.test('Login User thành công', function () {",
+											"        pm.expect(jsonData.token).to.be.a('string');",
+											"        pm.expect(jsonData.roles).to.include('USER');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"User123@\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/auth/login",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "auth", "login"]
+								}
+							}
+						},
+						{
+							"name": "🔄 Refresh Token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('user_token', jsonData.token);",
+											"    pm.test('Refresh token thành công', function () {",
+											"        pm.expect(jsonData.token).to.be.a('string');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/auth/refresh",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "auth", "refresh"]
+								}
+							}
+						},
+						{
+							"name": "🚪 Logout",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/auth/logout",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "auth", "logout"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "1.2 User Profile (Authenticated)",
+					"item": [
+						{
+							"name": "👤 Get My Profile",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.test('Lấy profile thành công', function () {",
+											"        pm.expect(jsonData.id).to.be.a('string');",
+											"        pm.expect(jsonData.username).to.be.a('string');",
+											"        pm.expect(jsonData.email).to.be.a('string');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{auth_url}}/api/v1/users/profile",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "users", "profile"]
+								}
+							}
+						},
+						{
+							"name": "✏️ Update My Profile",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"fullName\": \"Nguyễn Văn A Updated\",\n  \"phone\": \"0901234567\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/users/profile",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "users", "profile"]
+								}
+							}
+						},
+						{
+							"name": "🔑 Change Password",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"oldPassword\": \"User123@\",\n  \"newPassword\": \"NewPass1@abc\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/users/change-password",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "users", "change-password"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "1.3 User Management (Admin Only)",
+					"item": [
+						{
+							"name": "📋 Get All Users",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.test('Lấy danh sách users thành công', function () {",
+											"        pm.expect(jsonData).to.be.an('array');",
+											"    });",
+											"    if (jsonData.length > 0) {",
+											"        pm.collectionVariables.set('user_id', jsonData[0].id);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{auth_url}}/api/v1/users",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "users"]
+								}
+							}
+						},
+						{
+							"name": "🔍 Get User By ID",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{auth_url}}/api/v1/users/{{user_id}}",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "users", "{{user_id}}"]
+								}
+							}
+						},
+						{
+							"name": "➕ Create User (Admin)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('user_id', jsonData.id);",
+											"    pm.test('Tạo user thành công', function () {",
+											"        pm.expect(jsonData.id).to.be.a('string');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"username\": \"testuser_admin\",\n  \"email\": \"test_admin@example.com\",\n  \"password\": \"Password123@\",\n  \"fullName\": \"Test User Created by Admin\",\n  \"phone\": \"0912345678\",\n  \"role\": \"USER\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/users",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "users"]
+								}
+							}
+						},
+						{
+							"name": "✏️ Update User (Admin)",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"fullName\": \"Updated by Admin\",\n  \"phone\": \"0987654321\",\n  \"status\": \"ACTIVE\",\n  \"role\": \"USER\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/users/{{user_id}}",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "users", "{{user_id}}"]
+								}
+							}
+						},
+						{
+							"name": "🔒 Lock User (Admin)",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"status\": \"LOCKED\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/users/{{user_id}}",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "users", "{{user_id}}"]
+								}
+							}
+						},
+						{
+							"name": "🗑️ Delete User (Admin)",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{auth_url}}/api/v1/users/{{user_id}}",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "users", "{{user_id}}"]
+								}
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "══════ 2. PRODUCT SERVICE ══════",
+			"item": [
+				{
+					"name": "2.1 Category (via Gateway :8000)",
+					"item": [
+						{
+							"name": "📋 Get All Categories",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.test('Lấy danh sách categories thành công', function () {",
+											"        pm.expect(jsonData).to.be.an('array');",
+											"    });",
+											"    if (jsonData.length > 0) {",
+											"        pm.collectionVariables.set('category_id', jsonData[0].id);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/categories",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "categories"]
+								}
+							}
+						},
+						{
+							"name": "🔍 Get Category By ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/categories/{{category_id}}",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "categories", "{{category_id}}"]
+								}
+							}
+						},
+						{
+							"name": "➕ Create Category (Admin)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('category_id', jsonData.id);",
+											"    pm.test('Tạo category thành công', function () {",
+											"        pm.expect(jsonData.id).to.exist;",
+											"        pm.expect(jsonData.name).to.be.a('string');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Điện thoại\",\n  \"description\": \"Các loại điện thoại di động\"\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/categories",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "categories"]
+								}
+							}
+						},
+						{
+							"name": "✏️ Update Category (Admin)",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Điện thoại di động\",\n  \"description\": \"Smartphone và feature phone\"\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/categories/{{category_id}}",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "categories", "{{category_id}}"]
+								}
+							}
+						},
+						{
+							"name": "🗑️ Delete Category (Admin)",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/categories/{{category_id}}",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "categories", "{{category_id}}"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "2.2 Product (via Gateway :8000)",
+					"item": [
+						{
+							"name": "📋 Get All Products (Public & Cached)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.test('Lấy danh sách products thành công', function () {",
+											"        pm.expect(jsonData).to.be.an('array');",
+											"    });",
+											"    if (jsonData.length > 0) {",
+											"        pm.collectionVariables.set('product_id', jsonData[0].id);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/products",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "products"]
+								}
+							}
+						},
+						{
+							"name": "🔍 Get Product By ID (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/products/{{product_id}}",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "products", "{{product_id}}"]
+								}
+							}
+						},
+						{
+							"name": "🔍 Get Products By Category (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/products/category/{{category_id}}",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "products", "category", "{{category_id}}"]
+								}
+							}
+						},
+						{
+							"name": "🔎 Search Products (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/products/search?q=iPhone",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "products", "search"],
+									"query": [
+										{
+											"key": "q",
+											"value": "iPhone"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "🐛 Debug Auth (Check JWT claims)",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/products/debug-auth",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "products", "debug-auth"]
+								}
+							}
+						},
+						{
+							"name": "➕ Create Product (Admin)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('product_id', jsonData.id);",
+											"    pm.test('Tạo product thành công', function () {",
+											"        pm.expect(jsonData.id).to.be.a('string');",
+											"        pm.expect(jsonData.name).to.be.a('string');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"sku\": \"IPHONE-15PM-256\",\n  \"name\": \"iPhone 15 Pro Max 256GB Natural Titanium\",\n  \"description\": \"Chip A17 Pro siêu mạnh mẽ, khung vỏ Titan mỏng nhẹ, camera 48MP.\",\n  \"price\": 29990000.00,\n  \"category\": {\n    \"id\": 1\n  },\n  \"imageUrl\": \"https://placehold.co/400x400?text=iPhone15\",\n  \"status\": \"ACTIVE\"\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/products",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "products"]
+								}
+							}
+						},
+						{
+							"name": "📤 Upload Product Image (Cloudinary)",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": []
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/products/upload-image",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "products", "upload-image"]
+								}
+							}
+						},
+						{
+							"name": "✏️ Update Product (Admin)",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"iPhone 15 Pro Max 256GB (Flash Sale)\",\n  \"description\": \"Giảm giá cực sốc - Chip A17 Pro, Titan, Camera 48MP\",\n  \"price\": 27990000.00,\n  \"category\": {\n    \"id\": 1\n  },\n  \"imageUrl\": \"https://placehold.co/400x400?text=iPhone15Sale\",\n  \"status\": \"ACTIVE\"\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/products/{{product_id}}",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "products", "{{product_id}}"]
+								}
+							}
+						},
+						{
+							"name": "🗑️ Delete Product (Admin)",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/products/{{product_id}}",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "products", "{{product_id}}"]
+								}
+							}
+						},
+						{
+							"name": "📦 Get Products By IDs (Batch)",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\n  \"{{product_id}}\"\n]"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/products/batch",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "products", "batch"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "2.3 Product (Direct :8081)",
+					"item": [
+						{
+							"name": "📋 Get All Products (Direct)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{product_url}}/api/v1/products",
+									"host": ["{{product_url}}"],
+									"path": ["api", "v1", "products"]
+								}
+							}
+						},
+						{
+							"name": "➕ Create Product (Direct)",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"sku\": \"SAM-S24U-512\",\n  \"name\": \"Samsung Galaxy S24 Ultra 512GB\",\n  \"description\": \"Snapdragon 8 Gen 3, camera 200MP, S Pen tích hợp\",\n  \"price\": 33990000.00,\n  \"category\": {\n    \"id\": 1\n  },\n  \"imageUrl\": \"https://placehold.co/400x400?text=S24Ultra\",\n  \"status\": \"ACTIVE\"\n}"
+								},
+								"url": {
+									"raw": "{{product_url}}/api/v1/products",
+									"host": ["{{product_url}}"],
+									"path": ["api", "v1", "products"]
+								}
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "══════ 3. ORDER & CART SERVICE ══════",
+			"item": [
+				{
+					"name": "3.1 Cart (via Gateway :8000)",
+					"item": [
+						{
+							"name": "➕ Add to Cart",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('cart_item_id', jsonData.id);",
+											"    pm.test('Thêm vào giỏ hàng thành công', function () {",
+											"        pm.expect(jsonData.id).to.be.a('string');",
+											"        pm.expect(jsonData.productId).to.be.a('string');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"quantity\": 2\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/cart",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "cart"]
+								}
+							}
+						},
+						{
+							"name": "➕ Add Another Product to Cart",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.test('Thêm sản phẩm thứ 2 vào giỏ hàng thành công', function () {",
+											"        pm.expect(jsonData.id).to.be.a('string');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"quantity\": 1\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/cart",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "cart"]
+								}
+							}
+						},
+						{
+							"name": "🛒 Get My Cart",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.test('Lấy giỏ hàng thành công', function () {",
+											"        pm.expect(jsonData).to.be.an('array');",
+											"    });",
+											"    if (jsonData.length > 0) {",
+											"        pm.collectionVariables.set('cart_item_id', jsonData[0].id);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/cart",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "cart"]
+								}
+							}
+						},
+						{
+							"name": "✏️ Update Cart Item Quantity",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/cart/{{cart_item_id}}?quantity=5",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "cart", "{{cart_item_id}}"],
+									"query": [
+										{
+											"key": "quantity",
+											"value": "5"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "🗑️ Remove Item from Cart",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/cart/{{cart_item_id}}",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "cart", "{{cart_item_id}}"]
+								}
+							}
+						},
+						{
+							"name": "🧹 Clear My Cart",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/cart",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "cart"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "3.2 Order (via Gateway :8000)",
+					"item": [
+						{
+							"name": "🛍️ Create Order (Checkout)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('order_id', jsonData.id);",
+											"    pm.test('Đặt hàng thành công', function () {",
+											"        pm.expect(jsonData.id).to.be.a('string');",
+											"        pm.expect(jsonData.status).to.eql('PENDING');",
+											"        pm.expect(jsonData.totalAmount).to.be.above(0);",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"customerName\": \"Nguyễn Văn A\",\n  \"phone\": \"0987654321\",\n  \"customerEmail\": \"customer@example.com\",\n  \"shippingAddress\": \"123 Đường ABC, Quận 1, TP.HCM\",\n  \"note\": \"Giao giờ hành chính\",\n  \"paymentMethod\": \"COD\",\n  \"items\": [\n    {\n      \"productId\": \"{{product_id}}\",\n      \"productName\": \"iPhone 15 Pro Max\",\n      \"price\": 29990000.00,\n      \"quantity\": 2\n    }\n  ]\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders"]
+								}
+							}
+						},
+						{
+							"name": "📋 Get My Orders (History)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.test('Lấy lịch sử đơn hàng thành công', function () {",
+											"        pm.expect(jsonData).to.be.an('array');",
+											"    });",
+											"    if (jsonData.length > 0) {",
+											"        pm.collectionVariables.set('order_id', jsonData[0].id);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders"]
+								}
+							}
+						},
+						{
+							"name": "🔍 Get Order Detail By ID",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.test('Lấy chi tiết đơn hàng thành công', function () {",
+											"        pm.expect(jsonData.id).to.be.a('string');",
+											"        pm.expect(jsonData.orderItems).to.be.an('array');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders/{{order_id}}",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders", "{{order_id}}"]
+								}
+							}
+						},
+						{
+							"name": "📋 Admin - Get All Orders",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.test('Admin lấy tất cả đơn hàng thành công', function () {",
+											"        pm.expect(jsonData).to.be.an('array');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders/admin",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders", "admin"]
+								}
+							}
+						},
+						{
+							"name": "📝 Admin - Update Order Status (CONFIRMED)",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders/{{order_id}}/status?status=CONFIRMED",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders", "{{order_id}}", "status"],
+									"query": [
+										{
+											"key": "status",
+											"value": "CONFIRMED"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "🚚 Admin - Update Order Status (SHIPPING)",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders/{{order_id}}/status?status=SHIPPING",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders", "{{order_id}}", "status"],
+									"query": [
+										{
+											"key": "status",
+											"value": "SHIPPING"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "✅ Admin - Update Order Status (DELIVERED)",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders/{{order_id}}/status?status=DELIVERED&paymentStatus=PAID",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders", "{{order_id}}", "status"],
+									"query": [
+										{
+											"key": "status",
+											"value": "DELIVERED"
+										},
+										{
+											"key": "paymentStatus",
+											"value": "PAID"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "❌ Admin - Cancel Order",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders/{{order_id}}/status?status=CANCELLED",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders", "{{order_id}}", "status"],
+									"query": [
+										{
+											"key": "status",
+											"value": "CANCELLED"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "💳 Admin - Update Payment Status",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders/{{order_id}}/status?paymentStatus=PAID",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders", "{{order_id}}", "status"],
+									"query": [
+										{
+											"key": "paymentStatus",
+											"value": "PAID"
+										}
+									]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "3.3 Cart & Order (Direct :8082)",
+					"item": [
+						{
+							"name": "🛒 Get My Cart (Direct)",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{order_url}}/api/v1/cart",
+									"host": ["{{order_url}}"],
+									"path": ["api", "v1", "cart"]
+								}
+							}
+						},
+						{
+							"name": "📋 Get My Orders (Direct)",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{order_url}}/api/v1/orders",
+									"host": ["{{order_url}}"],
+									"path": ["api", "v1", "orders"]
+								}
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "══════ 4. FULL FLOW TESTS ══════",
+			"item": [
+				{
+					"name": "Flow 1: Register → Login → Profile",
+					"item": [
+						{
+							"name": "Step 1: Register",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('user_token', jsonData.token);",
+											"    pm.collectionVariables.set('refresh_token', jsonData.refreshToken);",
+											"    pm.test('Register thành công', function () {",
+											"        pm.expect(jsonData.token).to.exist;",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"username\": \"flowuser1\",\n  \"email\": \"flowuser1@example.com\",\n  \"password\": \"Flow123@abc\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/auth/register",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "auth", "register"]
+								}
+							}
+						},
+						{
+							"name": "Step 2: Get Profile",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Lấy profile thành công sau register', function () {",
+											"    pm.expect(pm.response.code).to.eql(200);",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.username).to.eql('flowuser1');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}],
+								"url": {
+									"raw": "{{auth_url}}/api/v1/users/profile",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "users", "profile"]
+								}
+							}
+						},
+						{
+							"name": "Step 3: Update Profile",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{"key": "Content-Type", "value": "application/json"},
+									{"key": "Authorization", "value": "Bearer {{user_token}}"}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"fullName\": \"Flow User 1\",\n  \"phone\": \"0901234567\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/users/profile",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "users", "profile"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Flow 2: Login → Cart → Order",
+					"item": [
+						{
+							"name": "Step 1: Login User",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('user_token', jsonData.token);",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"User123@\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/auth/login",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "auth", "login"]
+								}
+							}
+						},
+						{
+							"name": "Step 2: Add Product to Cart",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('cart_item_id', jsonData.id);",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{"key": "Content-Type", "value": "application/json"},
+									{"key": "Authorization", "value": "Bearer {{user_token}}"}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"quantity\": 1\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/cart",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "cart"]
+								}
+							}
+						},
+						{
+							"name": "Step 3: View Cart",
+							"request": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/cart",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "cart"]
+								}
+							}
+						},
+						{
+							"name": "Step 4: Create Order (Checkout)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('order_id', jsonData.id);",
+											"    pm.test('Đặt hàng thành công', function () {",
+											"        pm.expect(jsonData.status).to.eql('PENDING');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{"key": "Content-Type", "value": "application/json"},
+									{"key": "Authorization", "value": "Bearer {{user_token}}"}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"customerName\": \"Nguyễn Văn Flow\",\n  \"phone\": \"0987654321\",\n  \"customerEmail\": \"flow@example.com\",\n  \"shippingAddress\": \"456 Đường XYZ, Quận 3, TP.HCM\",\n  \"note\": \"Test flow order\",\n  \"paymentMethod\": \"COD\",\n  \"items\": [\n    {\n      \"productId\": \"{{product_id}}\",\n      \"productName\": \"Test Product\",\n      \"price\": 29990000.00,\n      \"quantity\": 1\n    }\n  ]\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders"]
+								}
+							}
+						},
+						{
+							"name": "Step 5: View Order Detail",
+							"request": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders/{{order_id}}",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders", "{{order_id}}"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Flow 3: Admin Order Management",
+					"item": [
+						{
+							"name": "Step 1: Login Admin",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('admin_token', jsonData.token);",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123@\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/v1/auth/login",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "v1", "auth", "login"]
+								}
+							}
+						},
+						{
+							"name": "Step 2: Get All Orders",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    if (jsonData.length > 0) {",
+											"        pm.collectionVariables.set('order_id', jsonData[0].id);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders/admin",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders", "admin"]
+								}
+							}
+						},
+						{
+							"name": "Step 3: Confirm Order",
+							"request": {
+								"method": "PUT",
+								"header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders/{{order_id}}/status?status=CONFIRMED",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders", "{{order_id}}", "status"],
+									"query": [{"key": "status", "value": "CONFIRMED"}]
+								}
+							}
+						},
+						{
+							"name": "Step 4: Ship Order",
+							"request": {
+								"method": "PUT",
+								"header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders/{{order_id}}/status?status=SHIPPING",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders", "{{order_id}}", "status"],
+									"query": [{"key": "status", "value": "SHIPPING"}]
+								}
+							}
+						},
+						{
+							"name": "Step 5: Deliver & Mark Paid",
+							"request": {
+								"method": "PUT",
+								"header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}],
+								"url": {
+									"raw": "{{gateway_url}}/api/v1/orders/{{order_id}}/status?status=DELIVERED&paymentStatus=PAID",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "v1", "orders", "{{order_id}}", "status"],
+									"query": [
+										{"key": "status", "value": "DELIVERED"},
+										{"key": "paymentStatus", "value": "PAID"}
+									]
+								}
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "══════ 5. CART SERVICE (:8086) ══════",
+			"item": [
+				{
+					"name": "5.1 Get Cart",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/v1/cart",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "v1", "cart"]
+						}
+					}
+				},
+				{
+					"name": "5.2 Add Item to Cart",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"quantity\": 2\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/v1/cart/items",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "v1", "cart", "items"]
+						}
+					}
+				},
+				{
+					"name": "5.3 Update Item Quantity",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/v1/cart/items/{{product_id}}?quantity=5",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "v1", "cart", "items", "{{product_id}}"],
+							"query": [
+								{
+									"key": "quantity",
+									"value": "5"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "5.4 Remove Item from Cart",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/v1/cart/items/{{product_id}}",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "v1", "cart", "items", "{{product_id}}"]
+						}
+					}
+				},
+				{
+					"name": "5.5 Clear Cart",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/v1/cart",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "v1", "cart"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

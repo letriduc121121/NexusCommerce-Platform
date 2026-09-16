@@ -1,0 +1,44 @@
+<div class="profile-container">
+  <div class="container">
+    <div class="profile-layout">
+      <!-- Profile Sidebar Nav -->
+      <aside class="profile-sidebar">
+        <div class="user-card">
+          <div class="avatar-box">
+            @if (authService.currentUser()?.avatarUrl) {
+              <img [src]="authService.currentUser()?.avatarUrl" [alt]="authService.currentUser()?.fullName || 'Avatar'" class="avatar-img" />
+            } @else {
+              <lucide-angular [img]="UserIcon" [size]="32"></lucide-angular>
+            }
+          </div>
+          <h3 class="user-name">{{ authService.currentUser()?.fullName || 'Thành viên' }}</h3>
+          <p class="user-email">{{ authService.currentUser()?.email }}</p>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a routerLink="/profile" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="sidebar-link">
+            <lucide-angular [img]="UserIcon" [size]="18"></lucide-angular>
+            <span>Thông tin cá nhân</span>
+          </a>
+          <a routerLink="/profile/orders" routerLinkActive="active" class="sidebar-link">
+            <lucide-angular [img]="PackageIcon" [size]="18"></lucide-angular>
+            <span>Lịch sử đơn hàng</span>
+          </a>
+          <a routerLink="/profile/change-password" routerLinkActive="active" class="sidebar-link">
+            <lucide-angular [img]="KeyRoundIcon" [size]="18"></lucide-angular>
+            <span>Đổi mật khẩu</span>
+          </a>
+          <button (click)="logout()" class="sidebar-link logout-btn">
+            <lucide-angular [img]="LogOutIcon" [size]="18"></lucide-angular>
+            <span>Đăng xuất</span>
+          </button>
+        </nav>
+      </aside>
+
+      <!-- Main Profile Content Area -->
+      <main class="profile-main-content">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  </div>
+</div>

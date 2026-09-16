@@ -1,0 +1,189 @@
+.admin-wrapper {
+  display: flex;
+  min-height: 100vh;
+  background-color: #ffffff;
+  color: #000000;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Sidebar */
+.admin-sidebar {
+  width: 250px;
+  background-color: #000000;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 24px 20px;
+  border-bottom: 1px solid #222222;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .brand-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .brand-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    background-color: #ffffff;
+    color: #000000;
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+}
+
+.sidebar-nav {
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #888888;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+
+    &:hover, &.active {
+      background-color: #1a1a1a;
+      color: #ffffff;
+    }
+
+    &.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      &:hover { background-color: transparent; }
+    }
+
+    /* Số đơn đang chờ duyệt, đồng bộ với chuông trên header. */
+    .nav-badge {
+      margin-left: auto;
+      min-width: 20px;
+      padding: 1px 6px;
+      background-color: #dc2626;
+      color: #ffffff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-align: center;
+      border-radius: 999px;
+    }
+  }
+}
+
+.sidebar-footer {
+  padding: 16px 12px;
+  border-top: 1px solid #222222;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .footer-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: #aaaaaa;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+
+    &:hover {
+      background-color: #1a1a1a;
+      color: #ffffff;
+    }
+
+    &.btn-logout {
+      color: #ff6b6b;
+      &:hover { background-color: rgba(255, 107, 107, 0.1); }
+    }
+  }
+}
+
+/* Main Layout Area */
+.admin-main {
+  margin-left: 250px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-header {
+  height: 60px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+
+  .header-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #000000;
+    margin: 0;
+    text-transform: none;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .header-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .user-name {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: #000000;
+    }
+
+    .user-role {
+      font-size: 0.7rem;
+      font-weight: 700;
+      background-color: #000000;
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: 2px;
+    }
+  }
+}
+
+.admin-page-content {
+  padding: 32px;
+  flex: 1;
+  background-color: #fcfcfc;
+}

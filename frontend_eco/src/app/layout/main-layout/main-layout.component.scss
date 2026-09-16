@@ -1,0 +1,7 @@
+@use '../../../styles/variables' as v;
+
+
+.main-content {
+  padding-top: v.$header-height;
+  min-height: calc(100vh - #{v.$header-height});
+}

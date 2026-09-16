@@ -1,0 +1,93 @@
+@use '../../../styles/variables' as v;
+
+.detail-page { padding: calc(v.$header-height + 20px) 0 40px; background: #fff; min-height: 70vh; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+.state-box {
+  text-align: center; padding: 60px 20px; color: #64748b;
+  .back-link { display: inline-block; margin-top: 12px; color: #000; font-weight: 600; }
+}
+
+.detail-main {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start;
+  @media (max-width: 900px) { grid-template-columns: 1fr; gap: 24px; }
+}
+
+.media-col .main-img {
+  width: 100%; aspect-ratio: 1; object-fit: cover; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
+}
+
+.info-col {
+  .breadcrumb {
+    display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: #94a3b8; margin-bottom: 10px;
+    a { color: #64748b; text-decoration: none; &:hover { color: #000; } }
+  }
+
+  .product-title { font-size: 1.75rem; font-weight: 600; color: #0f172a; margin: 0 0 8px; }
+  .product-price { font-size: 1.25rem; font-weight: 600; color: #0f172a; margin: 0 0 12px; }
+  .sku-line { font-size: 0.8rem; color: #94a3b8; margin: 0 0 8px; }
+  .stock {
+    display: flex; align-items: center; gap: 6px; font-size: 0.82rem; margin: 0 0 20px;
+    &.in-stock { color: #16a34a; } &.out-stock { color: #b91c1c; }
+  }
+}
+
+.qty-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  .qty-label { font-size: 0.72rem; color: #64748b; }
+  .qty-control {
+    display: flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden;
+    button {
+      width: 32px; height: 32px; background: #fff; border: none; font-size: 1rem; color: #0f172a; cursor: pointer;
+      &:hover:not(:disabled) { background: #f1f5f9; } &:disabled { opacity: 0.4; cursor: not-allowed; }
+    }
+    .qty-value { width: 36px; text-align: center; font-size: 0.88rem; font-weight: 600; color: #0f172a; }
+  }
+}
+
+.cart-alert {
+  font-size: 0.84rem; margin: 0 0 12px;
+  &.success { color: #16a34a; } &.error { color: #b91c1c; }
+}
+
+.action-group {
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;
+  .btn {
+    height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.82rem; font-weight: 600; border-radius: 4px; cursor: pointer; text-decoration: none;
+  }
+  .btn-primary { background: #000; color: #fff; border: none; &:hover:not(:disabled) { background: #1e293b; } &:disabled { opacity: 0.45; cursor: not-allowed; } }
+  .btn-outline { background: transparent; color: #0f172a; border: 1px solid #cbd5e1; &:hover { background: #f8fafc; } }
+}
+
+.accordion {
+  border-top: 1px solid #e2e8f0;
+  .panel { border-bottom: 1px solid #e2e8f0; }
+  .panel-head {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 0; background: transparent; border: none; font-size: 0.78rem; font-weight: 600; color: #0f172a; cursor: pointer;
+    lucide-angular { color: #64748b; transition: transform 0.2s ease; &.rotated { transform: rotate(180deg); } }
+  }
+  .panel-body {
+    padding: 0 0 14px; font-size: 0.85rem; line-height: 1.6; color: #475569;
+    p { margin: 0; } ul { margin: 0; padding-left: 18px; li { margin-bottom: 4px; } }
+  }
+}
+
+.related-section {
+  margin-top: 48px; padding-top: 36px; border-top: 1px solid #e2e8f0;
+  .related-title { font-size: 1.2rem; font-weight: 600; color: #0f172a; margin: 0 0 20px; }
+}
+
+.related-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.related-card {
+  text-decoration: none; color: inherit;
+  .related-img { width: 100%; aspect-ratio: 1; object-fit: cover; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px; }
+  &:hover .related-img { opacity: 0.85; }
+  .related-cat { display: block; font-size: 0.68rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 2px; }
+  .related-name { font-size: 0.88rem; font-weight: 500; color: #0f172a; margin: 0 0 4px; line-height: 1.3; }
+  .related-price { font-size: 0.85rem; font-weight: 600; color: #0f172a; margin: 0; }
+}
+

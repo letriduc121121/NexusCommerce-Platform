@@ -1,0 +1,78 @@
+<div class="admin-wrapper">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <a routerLink="/" class="brand-title">AULA SHOP</a>
+      <span class="brand-tag">ADMIN</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item">
+        <lucide-angular [img]="LayoutDashboardIcon" [size]="18"></lucide-angular>
+        <span>Tổng Quan</span>
+      </a>
+
+      <a routerLink="/admin/users" routerLinkActive="active" class="nav-item">
+        <lucide-angular [img]="UsersIcon" [size]="18"></lucide-angular>
+        <span>Quản Lý Người Dùng</span>
+      </a>
+
+      <a routerLink="/admin/products" routerLinkActive="active" class="nav-item">
+        <lucide-angular [img]="ShoppingBagIcon" [size]="18"></lucide-angular>
+        <span>Quản Lý Sản Phẩm</span>
+      </a>
+
+      <a routerLink="/admin/inventory" routerLinkActive="active" class="nav-item">
+        <lucide-angular [img]="WarehouseIcon" [size]="18"></lucide-angular>
+        <span>Quản Lý Kho</span>
+      </a>
+
+      <a routerLink="/admin/orders" routerLinkActive="active" class="nav-item">
+        <lucide-angular [img]="PackageIcon" [size]="18"></lucide-angular>
+        <span>Quản Lý Đơn Hàng</span>
+        @if (notifications.pendingCount() > 0) {
+          <span class="nav-badge">{{ notifications.pendingCount() }}</span>
+        }
+      </a>
+
+      <a routerLink="/admin/vouchers" routerLinkActive="active" class="nav-item">
+        <lucide-angular [img]="TicketIcon" [size]="18"></lucide-angular>
+        <span>Quản Lý Voucher</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a routerLink="/" class="footer-btn">
+        <lucide-angular [img]="ArrowLeftIcon" [size]="16"></lucide-angular>
+        <span>Cửa Hàng</span>
+      </a>
+
+      <button (click)="logout()" class="footer-btn btn-logout">
+        <lucide-angular [img]="LogOutIcon" [size]="16"></lucide-angular>
+        <span>Đăng Xuất</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="admin-main">
+    <header class="admin-header">
+      <div class="header-left">
+        <h2 class="header-title">Hệ Thống Quản Trị</h2>
+      </div>
+
+      <div class="header-right">
+        <app-notification-bell />
+
+        <div class="header-user">
+          <span class="user-name">{{ authService.currentUser()?.fullName || authService.currentUser()?.email }}</span>
+          <span class="user-role">ADMIN</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

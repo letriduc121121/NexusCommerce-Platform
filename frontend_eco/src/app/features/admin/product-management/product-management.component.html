@@ -1,0 +1,195 @@
+<div class="product-management-page">
+  <!-- Top Bar -->
+  <div class="page-topbar">
+    <div>
+      <h1 class="page-title">Quản Lý Sản Phẩm</h1>
+      <p class="page-subtitle">Thêm, sửa, xóa sản phẩm của cửa hàng</p>
+    </div>
+
+    <button (click)="openCreate()" class="btn btn-black">
+      <lucide-angular [img]="PlusIcon" [size]="16"></lucide-angular>
+      Thêm Sản Phẩm
+    </button>
+  </div>
+
+  <!-- Messages -->
+  @if (successMessage()) {
+    <div class="alert alert-success">{{ successMessage() }}</div>
+  }
+  @if (errorMessage() && !isModalOpen()) {
+    <div class="alert alert-error">{{ errorMessage() }}</div>
+  }
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-box">
+      <lucide-angular [img]="SearchIcon" [size]="16" class="search-icon"></lucide-angular>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Tìm theo tên hoặc SKU..."
+        class="search-input"
+      />
+    </div>
+
+    <button (click)="loadProducts()" class="btn btn-outline">
+      <lucide-angular [img]="RefreshIcon" [size]="15"></lucide-angular>
+      Làm Mới
+    </button>
+  </div>
+
+  <!-- Bảng sản phẩm -->
+  <div class="table-container">
+    @if (isLoading()) {
+      <div class="status-state">Đang nạp danh sách sản phẩm...</div>
+    } @else if (filteredProducts().length === 0) {
+      <div class="status-state">Không tìm thấy sản phẩm nào.</div>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Ảnh</th>
+            <th>Tên Sản Phẩm</th>
+            <th>SKU</th>
+            <th>Danh Mục</th>
+            <th>Giá</th>
+            <th>Trạng Thái</th>
+            <th class="text-right">Thao Tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of paginatedProducts(); track p.id) {
+            <tr>
+              <td>
+                <img [src]="p.imageUrl || 'https://placehold.co/80x80?text=N/A'" [alt]="p.name" class="thumb" />
+              </td>
+              <td class="cell-bold">{{ p.name }}</td>
+              <td class="cell-muted">{{ p.sku }}</td>
+              <td class="cell-muted">{{ p.category?.name || '—' }}</td>
+              <td class="cell-bold">{{ p.price | currency:'VND':'symbol-narrow':'1.0-0' }}</td>
+              <td>
+                <span class="badge" [class.badge-success]="p.status === 'ACTIVE'">{{ p.status }}</span>
+              </td>
+              <td class="text-right">
+                <button (click)="openEdit(p)" class="icon-btn" title="Sửa">
+                  <lucide-angular [img]="EditIcon" [size]="15"></lucide-angular>
+                </button>
+                <button (click)="openDeleteModal(p)" class="icon-btn danger" title="Xóa">
+                  <lucide-angular [img]="TrashIcon" [size]="15"></lucide-angular>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <app-pagination
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize"
+        [totalItems]="filteredProducts().length"
+        (pageChange)="currentPage.set($event)"
+      ></app-pagination>
+    }
+  </div>
+</div>
+
+<!-- Modal thêm / sửa -->
+@if (isModalOpen()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>{{ editingId() ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới' }}</h3>
+        <button (click)="closeModal()" class="icon-btn">
+          <lucide-angular [img]="XIcon" [size]="18"></lucide-angular>
+        </button>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="alert alert-error">{{ errorMessage() }}</div>
+      }
+
+      <div class="modal-body">
+        <div class="field">
+          <label>Tên sản phẩm *</label>
+          <input type="text" [ngModel]="form().name" (ngModelChange)="setField('name', $event)" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>SKU *</label>
+            <input type="text" [ngModel]="form().sku" (ngModelChange)="setField('sku', $event)" />
+          </div>
+
+          <div class="field">
+            <label>Giá (VND) *</label>
+            <input type="number" min="0" [ngModel]="form().price" (ngModelChange)="setField('price', +$event)" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Danh mục *</label>
+            <select [ngModel]="form().category.id" (ngModelChange)="setCategory($event)">
+              <option [value]="0" disabled>-- Chọn danh mục --</option>
+              @for (cat of categories(); track cat.id) {
+                <option [value]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Trạng thái</label>
+            <select [ngModel]="form().status" (ngModelChange)="setField('status', $event)">
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="INACTIVE">INACTIVE</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Ảnh Sản Phẩm (Tải ảnh từ máy tính)</label>
+          @if (form().imageUrl) {
+            <div class="image-preview-container">
+              <img [src]="form().imageUrl" alt="Ảnh sản phẩm" class="image-preview-img" />
+              <button type="button" (click)="removeImage()" class="btn-remove-img">
+                <lucide-angular [img]="XIcon" [size]="14"></lucide-angular> Xóa ảnh
+              </button>
+            </div>
+          } @else {
+            <div class="upload-dropzone">
+              <lucide-angular [img]="UploadIcon" [size]="24" class="upload-icon"></lucide-angular>
+              <span>Nhấp vào đây để tải ảnh từ máy tính</span>
+              <input type="file" accept="image/*" (change)="onFileSelected($event)" class="file-input" />
+            </div>
+          }
+        </div>
+
+        <div class="field">
+          <label>Mô tả sản phẩm</label>
+          <textarea rows="3" [ngModel]="form().description" (ngModelChange)="setField('description', $event)"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button (click)="closeModal()" class="btn btn-outline">Hủy</button>
+        <button (click)="submit()" class="btn btn-black" [disabled]="isLoading()">
+          {{ isLoading() ? 'Đang lưu...' : 'Lưu' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Popup Modal Xác Nhận Xóa -->
+<app-modal
+  [isOpen]="isDeleteModalOpen()"
+  type="danger"
+  title="Xác Nhận Ngừng Kinh Doanh"
+  [message]="'Bạn có chắc chắn muốn xóa/ngừng kinh doanh sản phẩm &quot;' + (deleteTarget()?.name || '') + '&quot;?\nSản phẩm sẽ bị ẩn khỏi cửa hàng và không khôi phục được từ đây.'"
+  confirmText="Ngừng Kinh Doanh"
+  cancelText="Hủy Bỏ"
+  [isLoading]="isLoading()"
+  (confirm)="confirmDelete()"
+  (close)="isDeleteModalOpen.set(false); deleteTarget.set(null)"
+/>

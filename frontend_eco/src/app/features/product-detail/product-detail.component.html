@@ -1,0 +1,125 @@
+<div class="detail-page">
+  @if (isLoading()) {
+    <div class="container state-box"><p>Đang tải sản phẩm...</p></div>
+  } @else if (errorMessage()) {
+    <div class="container state-box">
+      <p>{{ errorMessage() }}</p>
+      <a routerLink="/products" class="back-link">Quay lại danh sách sản phẩm</a>
+    </div>
+  } @else if (product(); as p) {
+
+    <!-- Khối chính: ảnh trái - thông tin phải -->
+    <div class="container detail-main">
+      <div class="media-col">
+        <img [src]="p.imageUrl || 'https://placehold.co/800x800?text=No+Image'" [alt]="p.name" class="main-img" />
+      </div>
+
+      <div class="info-col">
+        <nav class="breadcrumb">
+          <a routerLink="/products">SẢN PHẨM</a>
+          <span>/</span>
+          <span>{{ p.category?.name || 'KHÁC' }}</span>
+        </nav>
+
+        <h1 class="product-title">{{ p.name }}</h1>
+        <p class="product-price">{{ p.price | currency:'VND':'symbol-narrow':'1.0-0' }}</p>
+
+        <p class="sku-line">Mã sản phẩm: {{ p.sku }}</p>
+
+        @if (p.status === 'ACTIVE') {
+          <p class="stock in-stock">
+            <lucide-angular [img]="CheckIcon" [size]="14"></lucide-angular>
+            Còn hàng
+          </p>
+        } @else {
+          <p class="stock out-stock">Tạm hết hàng</p>
+        }
+
+        <div class="qty-row">
+          <span class="qty-label">SỐ LƯỢNG</span>
+          <div class="qty-control">
+            <button (click)="changeQuantity(-1)" [disabled]="quantity() <= 1">−</button>
+            <span class="qty-value">{{ quantity() }}</span>
+            <button (click)="changeQuantity(1)">+</button>
+          </div>
+        </div>
+
+
+        <div class="action-group">
+          <button class="btn btn-primary" (click)="addToCart()" [disabled]="p.status !== 'ACTIVE' || isAdding()">
+            <lucide-angular [img]="ShoppingBagIcon" [size]="16"></lucide-angular>
+            {{ isAdding() ? 'ĐANG THÊM...' : 'THÊM VÀO GIỎ' }}
+          </button>
+          <a routerLink="/products" class="btn btn-outline">TIẾP TỤC XEM</a>
+        </div>
+
+        <!-- Accordion -->
+        <div class="accordion">
+          <div class="panel">
+            <button class="panel-head" (click)="togglePanel('details')">
+              <span>MÔ TẢ SẢN PHẨM</span>
+              <lucide-angular [img]="ChevronDownIcon" [size]="18" [class.rotated]="openPanel() === 'details'"></lucide-angular>
+            </button>
+            @if (openPanel() === 'details') {
+              <div class="panel-body">
+                <p>{{ p.description || 'Sản phẩm chưa có mô tả chi tiết.' }}</p>
+              </div>
+            }
+          </div>
+
+          <div class="panel">
+            <button class="panel-head" (click)="togglePanel('shipping')">
+              <span>VẬN CHUYỂN & ĐỔI TRẢ</span>
+              <lucide-angular [img]="ChevronDownIcon" [size]="18" [class.rotated]="openPanel() === 'shipping'"></lucide-angular>
+            </button>
+            @if (openPanel() === 'shipping') {
+              <div class="panel-body">
+                <ul>
+                  <li>Giao hàng toàn quốc trong 2 - 5 ngày làm việc.</li>
+                  <li>Miễn phí vận chuyển cho đơn từ 500.000₫.</li>
+                  <li>Đổi trả trong 7 ngày nếu sản phẩm còn nguyên tem.</li>
+                </ul>
+              </div>
+            }
+          </div>
+
+          <div class="panel">
+            <button class="panel-head" (click)="togglePanel('warranty')">
+              <span>BẢO HÀNH</span>
+              <lucide-angular [img]="ChevronDownIcon" [size]="18" [class.rotated]="openPanel() === 'warranty'"></lucide-angular>
+            </button>
+            @if (openPanel() === 'warranty') {
+              <div class="panel-body">
+                <ul>
+                  <li>Bảo hành chính hãng 12 tháng.</li>
+                  <li>Hỗ trợ kỹ thuật trọn đời sản phẩm.</li>
+                </ul>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sản phẩm liên quan -->
+    @if (related().length > 0) {
+      <section class="related-section">
+        <div class="container">
+          <h2 class="related-title">SẢN PHẨM LIÊN QUAN</h2>
+          <div class="related-grid">
+            @for (item of related(); track item.id) {
+              <a [routerLink]="['/products', item.id]" class="related-card">
+                <img [src]="item.imageUrl || 'https://placehold.co/400x400?text=No+Image'" [alt]="item.name" class="related-img" />
+                <span class="related-cat">{{ item.category?.name }}</span>
+                <h3 class="related-name">{{ item.name }}</h3>
+                <p class="related-price">{{ item.price | currency:'VND':'symbol-narrow':'1.0-0' }}</p>
+              </a>
+            }
+          </div>
+        </div>
+      </section>
+    }
+  }
+</div>
+
+

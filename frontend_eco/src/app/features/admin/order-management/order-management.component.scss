@@ -1,0 +1,56 @@
+@use '../../../../styles/admin';
+
+.total-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  padding: 16px 0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;
+  font-size: 0.9rem; color: #64748b;
+  > div { display: flex; justify-content: space-between; align-items: center; }
+  strong { font-size: 1.15rem; color: #0f172a; }
+  .total-amount { color: #15803d; }
+}
+
+.note-box {
+  padding: 12px; margin: 12px 0; background: #f8fafc; border-left: 3px solid #cbd5e1;
+  border-radius: 4px; font-size: 0.88rem; color: #334155;
+  strong { display: block; margin-bottom: 4px; color: #0f172a; }
+}
+
+.text-center { text-align: center; }
+
+/* Chấm báo trạng thái kết nối realtime cạnh tiêu đề trang. */
+.live-dot {
+  display: inline-block; width: 7px; height: 7px; margin: 0 4px 0 8px;
+  border-radius: 50%; background: #16a34a; animation: blink 1.8s ease-in-out infinite;
+  &.is-off { background: #cbd5e1; animation: none; }
+}
+.live-text { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: #94a3b8; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.topbar-actions {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+
+/* Lối tắt lọc nhanh các đơn đang chờ duyệt. */
+.pending-chip {
+  display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px;
+  background: #fff7ed; border: 1px solid #fed7aa; border-radius: 999px;
+  font-size: 0.83rem; font-weight: 600; color: #b45309; cursor: pointer; white-space: nowrap;
+  &:hover { background: #ffedd5; }
+
+  .chip-count {
+    min-width: 22px; padding: 2px 7px; background: #dc2626; color: #fff;
+    font-size: 0.72rem; font-weight: 700; text-align: center; border-radius: 999px;
+  }
+}
+
+/* Đơn vừa về qua WebSocket mà admin chưa mở chuông xem. */
+.row-new td { background: #fffbeb; }
+.row-new td:first-child { box-shadow: inset 3px 0 0 #f59e0b; }
+
+.hint-wait {
+  align-self: center; font-size: 0.72rem; font-weight: 600; color: #b45309; white-space: nowrap;
+}

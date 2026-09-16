@@ -1,0 +1,70 @@
+<div class="bell">
+  <button
+    class="bell-trigger"
+    [class.is-open]="isOpen()"
+    [class.is-ringing]="notifications.unseenCount() > 0"
+    (click)="toggle($event)"
+    [attr.aria-label]="'Có ' + notifications.pendingCount() + ' đơn hàng chờ duyệt'">
+    <lucide-angular [img]="BellIcon" [size]="19" />
+
+    @if (notifications.pendingCount() > 0) {
+      <span class="bell-badge">{{ notifications.pendingCount() > 99 ? '99+' : notifications.pendingCount() }}</span>
+    }
+  </button>
+
+  @if (isOpen()) {
+    <div class="bell-panel" (click)="$event.stopPropagation()">
+      <header class="panel-head">
+        <div>
+          <h3>Đơn hàng chờ duyệt</h3>
+          <span class="panel-sub">
+            <i class="live-dot" [class.is-off]="!notifications.connected()"></i>
+            {{ notifications.connected() ? 'Đang đồng bộ thời gian thực' : 'Mất kết nối, đang thử lại...' }}
+          </span>
+        </div>
+        <span class="panel-count">{{ notifications.pendingCount() }}</span>
+      </header>
+
+      <div class="panel-list">
+        @for (order of notifications.pendingOrders(); track order.orderId) {
+          <button class="notif-item" (click)="openOrder(order)">
+            <div class="item-top">
+              <span class="item-customer">
+                @if (notifications.isUnseen(order.orderId)) { <i class="new-dot"></i> }
+                {{ order.customerName }}
+              </span>
+              <span class="item-time">{{ timeAgo(order.createdAt) }}</span>
+            </div>
+
+            <div class="item-mid">
+              <span class="item-code">#{{ shortId(order.orderId) }}</span>
+              <span class="item-amount">{{ order.totalAmount | number: '1.0-0' }} ₫</span>
+            </div>
+
+            <div class="item-tags">
+              <span class="tag">{{ order.itemCount }} sản phẩm</span>
+              <span class="tag">{{ order.paymentMethod }}</span>
+              @if (isAwaitingPayment(order)) {
+                <span class="tag tag-warn">Chờ thanh toán</span>
+              } @else {
+                <span class="tag tag-ok">Sẵn sàng duyệt</span>
+              }
+            </div>
+          </button>
+        } @empty {
+          <div class="panel-empty">
+            <lucide-angular [img]="InboxIcon" [size]="28" />
+            <p>Không có đơn nào chờ duyệt</p>
+          </div>
+        }
+      </div>
+
+      <footer class="panel-foot">
+        <button class="panel-link" (click)="openOrderList()">
+          Mở trang quản lý đơn hàng
+          <lucide-angular [img]="ArrowRightIcon" [size]="14" />
+        </button>
+      </footer>
+    </div>
+  }
+</div>

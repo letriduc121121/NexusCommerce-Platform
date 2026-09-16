@@ -1,0 +1,258 @@
+<div class="checkout-page">
+  <div class="checkout-container">
+    <!-- Breadcrumb & Nav back -->
+    <div class="checkout-header">
+      <a routerLink="/" class="back-link">
+        <lucide-angular [img]="ArrowLeftIcon" [size]="18"></lucide-angular>
+        <span>Tiếp tục mua sắm</span>
+      </a>
+      <h2>Chi Tiết Đặt Hàng & Thanh Toán</h2>
+    </div>
+
+    @if (!cartService.cart()?.items?.length) {
+      <div class="empty-cart-state">
+        <div class="icon-circle">
+          <lucide-angular [img]="ShoppingBagIcon" [size]="40"></lucide-angular>
+        </div>
+        <h3>Giỏ hàng của bạn đang trống</h3>
+        <p>Vui lòng chọn sản phẩm vào giỏ hàng trước khi tiến hành đặt hàng.</p>
+        <a routerLink="/" class="btn-primary">Quay Lại Trang Chủ</a>
+      </div>
+    } @else {
+      <div class="checkout-grid">
+        <!-- Cột trái: Thông tin nhận hàng & Thanh toán -->
+        <div class="checkout-form-section">
+          <form (ngSubmit)="onSubmit()" #checkoutForm="ngForm">
+            <!-- 1. Thông tin giao hàng -->
+            <div class="card-section">
+              <div class="section-title">
+                <lucide-angular [img]="TruckIcon" [size]="20"></lucide-angular>
+                <h3>1. Thông tin nhận hàng</h3>
+              </div>
+
+              <div class="form-group">
+                <label for="customerName">Họ và tên người nhận <span class="required">*</span></label>
+                <div class="input-wrapper">
+                  <lucide-angular [img]="UserIcon" [size]="18" class="input-icon"></lucide-angular>
+                  <input
+                    type="text"
+                    id="customerName"
+                    name="customerName"
+                    [ngModel]="customerName()"
+                    (ngModelChange)="customerName.set($event)"
+                    placeholder="Nhập tên người nhận hàng"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="phone">Số điện thoại <span class="required">*</span></label>
+                  <div class="input-wrapper">
+                    <lucide-angular [img]="PhoneIcon" [size]="18" class="input-icon"></lucide-angular>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      [ngModel]="phone()"
+                      (ngModelChange)="phone.set($event)"
+                      placeholder="VD: 0912345678"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="customerEmail">Email nhận thông báo</label>
+                  <div class="input-wrapper">
+                    <lucide-angular [img]="MailIcon" [size]="18" class="input-icon"></lucide-angular>
+                    <input
+                      type="email"
+                      id="customerEmail"
+                      name="customerEmail"
+                      [ngModel]="customerEmail()"
+                      (ngModelChange)="customerEmail.set($event)"
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="shippingAddress">Địa chỉ nhận hàng chi tiết <span class="required">*</span></label>
+                <div class="input-wrapper">
+                  <lucide-angular [img]="MapPinIcon" [size]="18" class="input-icon"></lucide-angular>
+                  <textarea
+                    id="shippingAddress"
+                    name="shippingAddress"
+                    rows="2"
+                    [ngModel]="shippingAddress()"
+                    (ngModelChange)="shippingAddress.set($event)"
+                    placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                    required
+                  ></textarea>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="note">Ghi chú đơn hàng (tùy chọn)</label>
+                <div class="input-wrapper">
+                  <lucide-angular [img]="FileTextIcon" [size]="18" class="input-icon"></lucide-angular>
+                  <input
+                    type="text"
+                    id="note"
+                    name="note"
+                    [ngModel]="note()"
+                    (ngModelChange)="note.set($event)"
+                    placeholder="Ghi chú về thời gian giao hàng, chỉ dẫn địa chỉ..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Phương thức thanh toán -->
+            <div class="card-section">
+              <div class="section-title">
+                <lucide-angular [img]="CreditCardIcon" [size]="20"></lucide-angular>
+                <h3>2. Phương thức thanh toán</h3>
+              </div>
+
+              <div class="payment-options">
+                <label class="payment-option" [class.selected]="paymentMethod() === 'COD'">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="COD"
+                    [checked]="paymentMethod() === 'COD'"
+                    (change)="paymentMethod.set('COD')"
+                  />
+                  <div class="option-content">
+                    <div class="option-header">
+                      <strong>Thanh toán khi nhận hàng (COD)</strong>
+                      <span class="badge">Phổ biến</span>
+                    </div>
+                    <p>Thanh toán bằng tiền mặt trực tiếp cho shipper khi nhận được hàng.</p>
+                  </div>
+                </label>
+
+                <label class="payment-option" [class.selected]="paymentMethod() === 'VNPAY'">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="VNPAY"
+                    [checked]="paymentMethod() === 'VNPAY'"
+                    (change)="paymentMethod.set('VNPAY')"
+                  />
+                  <div class="option-content">
+                    <div class="option-header">
+                      <strong>Thanh toán Online qua VNPAY</strong>
+                      <span class="badge vnpay">VNPAY QR / Thẻ ATM / VISA</span>
+                    </div>
+                    <p>Chuyển hướng an toàn tới VNPAY để quét QR Code hoặc dùng thẻ ngân hàng.</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Nút bấm Đặt hàng Submit Mobile -->
+            <div class="mobile-submit-btn">
+              <button type="submit" class="btn-submit" [disabled]="isSubmitting()">
+                @if (isSubmitting()) {
+                  <lucide-angular [img]="Loader2Icon" [size]="20" class="spin-icon"></lucide-angular>
+                  <span>Đang xử lý đơn hàng...</span>
+                } @else {
+                  <lucide-angular [img]="CheckCircleIcon" [size]="20"></lucide-angular>
+                  <span>XÁC NHẬN ĐẶT HÀNG</span>
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Cột phải: Danh sách sản phẩm & Tổng tiền -->
+        <div class="checkout-summary-section">
+          <div class="summary-card">
+            <h3>Sản phẩm trong đơn hàng ({{ cartService.itemCount() }})</h3>
+
+            <div class="order-items-list">
+              @for (item of cartService.cart()!.items; track (item.productId || item.id)) {
+                <div class="order-item">
+                  <div class="item-thumb">
+                    @if (item.imageUrl) {
+                      <img [src]="item.imageUrl" [alt]="item.productName" />
+                    } @else {
+                      <div class="thumb-placeholder">
+                        <lucide-angular [img]="PackageIcon" [size]="20"></lucide-angular>
+                      </div>
+                    }
+                    <span class="item-qty-badge">{{ item.quantity }}</span>
+                  </div>
+                  <div class="item-details">
+                    <h4 class="item-title">{{ item.productName }}</h4>
+                    <div class="item-price-info">
+                      <span>{{ item.price | currency:'VND':'symbol-narrow':'1.0-0' }}</span>
+                      <strong class="item-total">{{ (item.subtotal || (item.price * item.quantity)) | currency:'VND':'symbol-narrow':'1.0-0' }}</strong>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Voucher -->
+            <div class="voucher-box">
+              @if (!appliedCode()) {
+                <div class="voucher-input">
+                  <input type="text" placeholder="Nhập mã giảm giá"
+                         [ngModel]="voucherInput()" (ngModelChange)="voucherInput.set($event)" />
+                  <button type="button" (click)="applyVoucher()" [disabled]="isCheckingVoucher() || !voucherInput().trim()">
+                    {{ isCheckingVoucher() ? '...' : 'Áp dụng' }}
+                  </button>
+                </div>
+              } @else {
+                <div class="voucher-applied">
+                  <span>Đã áp mã <strong>{{ appliedCode() }}</strong></span>
+                  <button type="button" (click)="clearVoucher()">Bỏ</button>
+                </div>
+              }
+              @if (voucherMessage()) {
+                <p class="voucher-msg" [class.error]="!appliedCode()">{{ voucherMessage() }}</p>
+              }
+            </div>
+
+            <div class="price-breakdown">
+              <div class="price-row">
+                <span>Tạm tính sản phẩm</span>
+                <span>{{ cartService.totalAmount() | currency:'VND':'symbol-narrow':'1.0-0' }}</span>
+              </div>
+              @if (discountAmount() > 0) {
+                <div class="price-row">
+                  <span>Voucher giảm giá</span>
+                  <span class="discount">−{{ discountAmount() | currency:'VND':'symbol-narrow':'1.0-0' }}</span>
+                </div>
+              }
+              <div class="price-row">
+                <span>Phí vận chuyển</span>
+                <span class="free-ship">Miễn phí</span>
+              </div>
+              <div class="price-row total-row">
+                <span>Tổng tiền thanh toán</span>
+                <span class="final-total">{{ finalTotal() | currency:'VND':'symbol-narrow':'1.0-0' }}</span>
+              </div>
+            </div>
+
+            <button type="button" class="btn-submit desktop-submit" (click)="onSubmit()" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                <lucide-angular [img]="Loader2Icon" [size]="20" class="spin-icon"></lucide-angular>
+                <span>Đang xử lý đơn hàng...</span>
+              } @else {
+                <lucide-angular [img]="CheckCircleIcon" [size]="20"></lucide-angular>
+                <span>XÁC NHẬN ĐẶT HÀNG</span>
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

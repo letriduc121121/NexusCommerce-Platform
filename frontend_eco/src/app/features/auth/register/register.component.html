@@ -1,0 +1,113 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1 class="auth-title">Đăng Ký Tài Khoản</h1>
+      <p class="auth-subtitle">Tạo tài khoản mới để nhận thông tin ưu đãi và trải nghiệm dịch vụ</p>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-error">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <form (submit)="onSubmit()" class="auth-form">
+      <div class="form-group">
+        <label for="fullName" class="form-label">Họ và Tên</label>
+        <div class="input-wrapper">
+          <lucide-angular [img]="UserIcon" [size]="18" class="input-icon"></lucide-angular>
+          <input
+            type="text"
+            id="fullName"
+            [ngModel]="fullName()"
+            (ngModelChange)="fullName.set($event)"
+            name="fullName"
+            placeholder="Nguyễn Văn A"
+            class="form-control"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label">Địa chỉ Email</label>
+        <div class="input-wrapper">
+          <lucide-angular [img]="MailIcon" [size]="18" class="input-icon"></lucide-angular>
+          <input
+            type="email"
+            id="email"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+            name="email"
+            placeholder="example@gmail.com"
+            class="form-control"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone" class="form-label">Số Điện Thoại</label>
+        <div class="input-wrapper">
+          <lucide-angular [img]="PhoneIcon" [size]="18" class="input-icon"></lucide-angular>
+          <input
+            type="tel"
+            id="phone"
+            [ngModel]="phone()"
+            (ngModelChange)="phone.set($event)"
+            name="phone"
+            placeholder="0901 234 567"
+            class="form-control"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Mật Khẩu</label>
+        <div class="input-wrapper">
+          <lucide-angular [img]="LockIcon" [size]="18" class="input-icon"></lucide-angular>
+          <input
+            [type]="showPassword() ? 'text' : 'password'"
+            id="password"
+            [ngModel]="password()"
+            (ngModelChange)="password.set($event)"
+            name="password"
+            placeholder="••••••••"
+            class="form-control"
+            required
+          />
+          <button type="button" (click)="toggleShowPassword()" class="btn-toggle-eye">
+            <lucide-angular [img]="showPassword() ? EyeOffIcon : EyeIcon" [size]="18"></lucide-angular>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword" class="form-label">Nhập Lại Mật Khẩu</label>
+        <div class="input-wrapper">
+          <lucide-angular [img]="LockIcon" [size]="18" class="input-icon"></lucide-angular>
+          <input
+            [type]="showPassword() ? 'text' : 'password'"
+            id="confirmPassword"
+            [ngModel]="confirmPassword()"
+            (ngModelChange)="confirmPassword.set($event)"
+            name="confirmPassword"
+            placeholder="••••••••"
+            class="form-control"
+            required
+          />
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-submit">
+        <lucide-angular [img]="UserPlusIcon" [size]="18"></lucide-angular>
+        Đăng Ký Ngay
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Đã có tài khoản? <a routerLink="/login" class="link-switch">Đăng nhập <lucide-angular [img]="ArrowRightIcon" [size]="14"></lucide-angular></a></p>
+    </div>
+  </div>
+</div>

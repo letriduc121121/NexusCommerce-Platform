@@ -1,0 +1,281 @@
+<div class="user-management-page">
+  <!-- Top Bar -->
+  <div class="page-topbar">
+    <div>
+      <h1 class="page-title">Quản Lý Người Dùng</h1>
+      <p class="page-subtitle">Danh sách tài khoản hệ thống từ backend API Gateway</p>
+    </div>
+
+    <button (click)="openCreateModal()" class="btn btn-black">
+      <lucide-angular [img]="UserPlusIcon" [size]="16"></lucide-angular>
+      Thêm Người Dùng
+    </button>
+  </div>
+
+  <!-- Messages -->
+  @if (successMessage()) {
+    <div class="alert alert-success">
+      <lucide-angular [img]="CheckIcon" [size]="16"></lucide-angular>
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">
+      <lucide-angular [img]="XIcon" [size]="16"></lucide-angular>
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-box">
+      <lucide-angular [img]="SearchIcon" [size]="16" class="search-icon"></lucide-angular>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Tìm theo email, họ tên..."
+        class="search-input"
+      />
+    </div>
+
+    <button (click)="loadUsers()" class="btn btn-outline" title="Làm mới dữ liệu">
+      <lucide-angular [img]="RefreshIcon" [size]="15"></lucide-angular>
+      Làm Mới
+    </button>
+  </div>
+
+  <!-- User Table Container -->
+  <div class="table-container">
+    @if (isLoading()) {
+      <div class="status-state">Đang nạp danh sách người dùng...</div>
+    } @else if (filteredUsers().length === 0) {
+      <div class="status-state">Không tìm thấy người dùng nào.</div>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Họ và Tên</th>
+            <th>Số Điện Thoại</th>
+            <th>Vai Trò</th>
+            <th>Trạng Thái</th>
+            <th>Ngày Tạo</th>
+            <th class="text-right">Thao Tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of paginatedUsers(); track user.id) {
+            <tr>
+              <td class="cell-bold">{{ user.email }}</td>
+              <td>{{ user.fullName || '—' }}</td>
+              <td>{{ user.phone || '—' }}</td>
+              <td>
+                <span class="tag-role" [class.is-admin]="user.role === 'ADMIN'">
+                  {{ user.role }}
+                </span>
+              </td>
+              <td>
+                <span class="tag-status" [class.is-locked]="user.status === 'LOCKED'">
+                  {{ user.status }}
+                </span>
+              </td>
+              <td>{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td class="text-right">
+                <div class="actions">
+                  <button (click)="openEditModal(user)" class="icon-btn" title="Chỉnh sửa">
+                    <lucide-angular [img]="EditIcon" [size]="15"></lucide-angular>
+                  </button>
+                  <button (click)="openDeleteModal(user)" class="icon-btn danger" title="Xóa">
+                    <lucide-angular [img]="TrashIcon" [size]="15"></lucide-angular>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <app-pagination
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize"
+        [totalItems]="filteredUsers().length"
+        (pageChange)="currentPage.set($event)"
+      ></app-pagination>
+    }
+  </div>
+
+  <!-- Create Modal -->
+  @if (isCreateModalOpen()) {
+    <div class="modal-overlay" (click)="closeCreateModal()">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+        <div class="modal-head">
+          <h3>Thêm Người Dùng Mới</h3>
+          <button (click)="closeCreateModal()" class="icon-btn">
+            <lucide-angular [img]="XIcon" [size]="18"></lucide-angular>
+          </button>
+        </div>
+
+        <form (submit)="submitCreate()" class="modal-body">
+          <div class="field">
+            <label>Email (*)</label>
+            <input
+              type="email"
+              [ngModel]="createForm().email"
+              (ngModelChange)="createForm.set({...createForm(), email: $event})"
+              name="email"
+              placeholder="example@domain.com"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label>Mật khẩu (*)</label>
+            <input
+              type="password"
+              [ngModel]="createForm().password"
+              (ngModelChange)="createForm.set({...createForm(), password: $event})"
+              name="password"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label>Họ và tên</label>
+            <input
+              type="text"
+              [ngModel]="createForm().fullName"
+              (ngModelChange)="createForm.set({...createForm(), fullName: $event})"
+              name="fullName"
+              placeholder="Nguyễn Văn A"
+            />
+          </div>
+
+          <div class="field">
+            <label>Số điện thoại</label>
+            <input
+              type="text"
+              [ngModel]="createForm().phone"
+              (ngModelChange)="createForm.set({...createForm(), phone: $event})"
+              name="phone"
+              placeholder="0901234567"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label>Vai trò</label>
+              <select
+                [ngModel]="createForm().role"
+                (ngModelChange)="createForm.set({...createForm(), role: $event})"
+                name="role"
+              >
+                <option value="USER">USER (Khách hàng)</option>
+                <option value="ADMIN">ADMIN (Quản trị viên)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Trạng thái</label>
+              <select
+                [ngModel]="createForm().status"
+                (ngModelChange)="createForm.set({...createForm(), status: $event})"
+                name="status"
+              >
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="LOCKED">LOCKED</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-foot">
+            <button type="button" (click)="closeCreateModal()" class="btn btn-outline">Hủy</button>
+            <button type="submit" class="btn btn-black">Tạo Mới</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Edit Modal -->
+  @if (isEditModalOpen() && selectedUser()) {
+    <div class="modal-overlay" (click)="closeEditModal()">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+        <div class="modal-head">
+          <h3>Sửa Người Dùng: {{ selectedUser()?.email }}</h3>
+          <button (click)="closeEditModal()" class="icon-btn">
+            <lucide-angular [img]="XIcon" [size]="18"></lucide-angular>
+          </button>
+        </div>
+
+        <form (submit)="submitEdit()" class="modal-body">
+          <div class="field">
+            <label>Họ và tên</label>
+            <input
+              type="text"
+              [ngModel]="editForm().fullName"
+              (ngModelChange)="editForm.set({...editForm(), fullName: $event})"
+              name="fullName"
+            />
+          </div>
+
+          <div class="field">
+            <label>Số điện thoại</label>
+            <input
+              type="text"
+              [ngModel]="editForm().phone"
+              (ngModelChange)="editForm.set({...editForm(), phone: $event})"
+              name="phone"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label>Vai trò</label>
+              <select
+                [ngModel]="editForm().role"
+                (ngModelChange)="editForm.set({...editForm(), role: $event})"
+                name="role"
+              >
+                <option value="USER">USER (Khách hàng)</option>
+                <option value="ADMIN">ADMIN (Quản trị viên)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Trạng thái</label>
+              <select
+                [ngModel]="editForm().status"
+                (ngModelChange)="editForm.set({...editForm(), status: $event})"
+                name="status"
+              >
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="LOCKED">LOCKED (Khóa tài khoản)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-foot">
+            <button type="button" (click)="closeEditModal()" class="btn btn-outline">Hủy</button>
+            <button type="submit" class="btn btn-black">Lưu Thay Đổi</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Popup Modal Xác Nhận Xóa Người Dùng -->
+  <app-modal
+    [isOpen]="isDeleteModalOpen()"
+    type="danger"
+    title="Xác Nhận Xóa Người Dùng"
+    [message]="'Bạn có chắc chắn muốn xóa tài khoản người dùng &quot;' + (deleteTarget()?.email || '') + '&quot;?\nHành động này không thể hoàn tác.'"
+    confirmText="Xóa Tài Khoản"
+    cancelText="Hủy Bỏ"
+    [isLoading]="isLoading()"
+    (confirm)="confirmDeleteUser()"
+    (close)="isDeleteModalOpen.set(false); deleteTarget.set(null)"
+  />
+</div>

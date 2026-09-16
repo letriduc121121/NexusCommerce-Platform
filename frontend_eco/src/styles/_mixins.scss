@@ -1,0 +1,36 @@
+@use 'variables' as v;
+
+/// Media query rút gọn: @include respond-to(md) { ... }
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == sm {
+    @media (max-width: v.$breakpoint-sm) { @content; }
+  } @else if $breakpoint == md {
+    @media (max-width: v.$breakpoint-md) { @content; }
+  } @else if $breakpoint == lg {
+    @media (max-width: v.$breakpoint-lg) { @content; }
+  } @else if $breakpoint == xl {
+    @media (max-width: v.$breakpoint-xl) { @content; }
+  } @else {
+    @error 'Breakpoint không hợp lệ: #{$breakpoint}';
+  }
+}
+
+@mixin container {
+  width: 100%;
+  max-width: v.$container-max-width;
+  margin: 0 auto;
+  padding: 0 v.$spacing-md;
+}
+
+/// Cắt chữ sau $lines dòng.
+@mixin text-truncate($lines: 1) {
+  overflow: hidden;
+  @if $lines == 1 {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  } @else {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+  }
+}

@@ -1,0 +1,21 @@
+@use '../../../../styles/admin';
+
+/* Vai trò / trạng thái tài khoản: tông đơn sắc riêng, không dùng bộ màu badge chung. */
+.tag-role {
+  display: inline-block; padding: 2px 8px; border-radius: 2px;
+  font-size: 0.72rem; font-weight: 700; background-color: #f4f4f5; color: #333333;
+  &.is-admin { background-color: #000000; color: #ffffff; }
+}
+
+.tag-status {
+  display: inline-block; padding: 2px 8px; border-radius: 2px;
+  font-size: 0.72rem; font-weight: 700; border: 1px solid #e5e5e5; color: #000000;
+  &.is-locked { background-color: #f4f4f5; color: #777777; }
+}
+
+.form-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  @media (max-width: 520px) { grid-template-columns: 1fr; }
+}
+
+.icon-btn.danger:hover { background: #fef2f2; color: #dc2626; }

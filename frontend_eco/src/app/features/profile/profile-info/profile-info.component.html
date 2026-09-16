@@ -1,0 +1,88 @@
+<div class="profile-info-section">
+  <div class="section-header">
+    <h2 class="title">Quản Lý Thông Tin Cá Nhân</h2>
+    <p class="subtitle">Cập nhật họ tên, địa chỉ email, số điện thoại và địa chỉ giao hàng</p>
+  </div>
+
+  @if (successMessage()) {
+    <div class="alert alert-success">
+      <lucide-angular [img]="CheckCircleIcon" [size]="18"></lucide-angular>
+      {{ successMessage() }}
+    </div>
+  }
+
+  <form (submit)="onSubmit()" class="info-form">
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="fullName" class="form-label">Họ và Tên</label>
+        <div class="input-wrapper">
+          <lucide-angular [img]="UserIcon" [size]="18" class="input-icon"></lucide-angular>
+          <input
+            type="text"
+            id="fullName"
+            [ngModel]="fullName()"
+            (ngModelChange)="fullName.set($event)"
+            name="fullName"
+            class="form-control"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label">Địa chỉ Email</label>
+        <div class="input-wrapper">
+          <lucide-angular [img]="MailIcon" [size]="18" class="input-icon"></lucide-angular>
+          <input
+            type="email"
+            id="email"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+            name="email"
+            class="form-control"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone" class="form-label">Số Điện Thoại</label>
+        <div class="input-wrapper">
+          <lucide-angular [img]="PhoneIcon" [size]="18" class="input-icon"></lucide-angular>
+          <input
+            type="tel"
+            id="phone"
+            [ngModel]="phone()"
+            (ngModelChange)="phone.set($event)"
+            name="phone"
+            class="form-control"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-group full-width">
+        <label for="address" class="form-label">Địa Chỉ Giao Hàng Mặc Định</label>
+        <div class="input-wrapper">
+          <lucide-angular [img]="MapPinIcon" [size]="18" class="input-icon"></lucide-angular>
+          <input
+            type="text"
+            id="address"
+            [ngModel]="address()"
+            (ngModelChange)="address.set($event)"
+            name="address"
+            class="form-control"
+            required
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-save">
+        <lucide-angular [img]="SaveIcon" [size]="18"></lucide-angular>
+        Lưu Thay Đổi
+      </button>
+    </div>
+  </form>
+</div>

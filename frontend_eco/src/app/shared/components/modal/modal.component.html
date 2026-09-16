@@ -1,0 +1,52 @@
+@if (isOpen) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)">
+    <div class="modal-card" [class]="'type-' + type">
+      <button class="close-btn" (click)="handleCancel()" [disabled]="isLoading" title="Đóng">
+        <lucide-angular [img]="XIcon" [size]="18" />
+      </button>
+
+      <div class="modal-body">
+        <div class="icon-wrapper">
+          @if (type === 'danger' || type === 'confirm') {
+            <lucide-angular [img]="TrashIcon" [size]="24" class="icon-danger" />
+          } @else if (type === 'cart') {
+            <lucide-angular [img]="CartIcon" [size]="24" class="icon-cart" />
+          } @else if (type === 'success') {
+            <lucide-angular [img]="CheckIcon" [size]="24" class="icon-success" />
+          } @else {
+            <lucide-angular [img]="InfoIcon" [size]="24" class="icon-info" />
+          }
+        </div>
+
+        <div class="content-wrapper">
+          <h3 class="modal-title">{{ title }}</h3>
+          @if (message) {
+            <p class="modal-message">{{ message }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        @if (type === 'cart') {
+          <button class="btn btn-outline" (click)="handleCancel()">
+            Tiếp Tục Mua Sắm
+          </button>
+          <a [routerLink]="cartUrl" class="btn btn-primary" (click)="handleCancel()">
+            Xem Giỏ Hàng <lucide-angular [img]="ArrowRightIcon" [size]="16" />
+          </a>
+        } @else if (type === 'danger' || type === 'confirm') {
+          <button class="btn btn-outline" (click)="handleCancel()" [disabled]="isLoading">
+            {{ cancelText }}
+          </button>
+          <button class="btn btn-danger" (click)="handleConfirm()" [disabled]="isLoading">
+            {{ isLoading ? 'Đang xử lý...' : confirmText }}
+          </button>
+        } @else {
+          <button class="btn btn-primary" (click)="handleConfirm()" [disabled]="isLoading">
+            {{ confirmText || 'Đóng' }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,99 @@
+// ---------------------------------------------------------------------------
+// Style dùng chung cho các trang CRUD trong khu vực Admin.
+// Component nào cần thì: @use '../../../../styles/admin';
+// ---------------------------------------------------------------------------
+
+.page-topbar {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px;
+  .page-title { font-size: 1.4rem; font-weight: 700; color: #0f172a; margin: 0 0 4px; }
+  .page-subtitle { font-size: 0.85rem; color: #64748b; margin: 0; }
+}
+
+.btn {
+  height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.84rem; font-weight: 600; border-radius: 6px; cursor: pointer; white-space: nowrap;
+  &.btn-sm { height: 32px; padding: 0 10px; font-size: 0.78rem; }
+  &.btn-black { background: #000; color: #fff; border: none; &:hover:not(:disabled) { background: #1e293b; } }
+  &.btn-outline { background: #fff; color: #334155; border: 1px solid #cbd5e1; &:hover:not(:disabled) { background: #f8fafc; } }
+  &.btn-danger { background: #fff; color: #b91c1c; border: 1px solid #fecaca; &:hover:not(:disabled) { background: #fef2f2; } }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.icon-btn {
+  width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: none; border-radius: 6px; color: #64748b; cursor: pointer;
+  &:hover { background: #f1f5f9; color: #0f172a; }
+}
+
+.alert {
+  padding: 10px 14px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px;
+  &.alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+  &.alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+}
+
+.toolbar {
+  display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+  .search-box {
+    position: relative; flex: 1; min-width: 240px; max-width: 380px; display: flex; align-items: center;
+    .search-icon { position: absolute; left: 12px; color: #94a3b8; }
+    input { width: 100%; height: 38px; padding: 0 14px 0 36px; }
+  }
+  select { height: 38px; }
+}
+
+// Input / select / textarea dùng chung một kiểu.
+input, select, textarea {
+  font-size: 0.85rem; font-family: inherit; color: #334155; background: #fff;
+  padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;
+  &:focus { border-color: #000; }
+}
+textarea { padding: 9px 12px; resize: vertical; }
+
+.field {
+  display: flex; flex-direction: column; gap: 5px;
+  label { font-size: 0.8rem; font-weight: 600; color: #334155; }
+  input, select { height: 38px; }
+  .hint { font-size: 0.76rem; color: #64748b; }
+}
+
+.table-container { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow-x: auto; padding: 12px; }
+.status-state { padding: 40px 20px; text-align: center; font-size: 0.88rem; color: #64748b; }
+
+.data-table {
+  width: 100%; border-collapse: collapse; font-size: 0.85rem;
+  th { text-align: left; padding: 12px 14px; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+  td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+  tbody tr:hover { background: #f8fafc; }
+  .text-right { text-align: right; }
+  .cell-bold { font-weight: 700; color: #0f172a; }
+  .cell-muted { color: #64748b; font-size: 0.8rem; }
+  .thumb { width: 40px; height: 40px; object-fit: contain; border-radius: 4px; background: #f1f5f9; }
+  .actions { display: flex; justify-content: flex-end; gap: 6px; }
+}
+
+.badge {
+  display: inline-block; padding: 3px 9px; border-radius: 999px;
+  font-size: 0.7rem; font-weight: 700; background: #f1f5f9; color: #64748b;
+  &.badge-success { background: #dcfce7; color: #15803d; }
+  &.badge-info    { background: #e0f2fe; color: #0369a1; }
+  &.badge-warning { background: #fef3c7; color: #b45309; }
+  &.badge-danger  { background: #fee2e2; color: #b91c1c; }
+}
+
+.modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 1000; }
+.modal-box {
+  background: #fff; border-radius: 10px; width: 100%; max-width: 460px; padding: 20px; max-height: 90vh; overflow-y: auto;
+  &.modal-lg { max-width: 640px; }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; h3 { font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0; } }
+  .modal-body { display: flex; flex-direction: column; gap: 14px; }
+  .modal-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+}
+
+// Lưới "nhãn - giá trị" dùng cho các khối xem chi tiết.
+.info-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  background: #f8fafc; padding: 14px; border-radius: 6px; border: 1px solid #e2e8f0;
+  > div { display: flex; flex-direction: column; gap: 2px; }
+  .label { font-size: 0.75rem; font-weight: 600; color: #64748b; }
+  .val { font-size: 0.86rem; font-weight: 500; color: #0f172a; word-break: break-word; }
+}

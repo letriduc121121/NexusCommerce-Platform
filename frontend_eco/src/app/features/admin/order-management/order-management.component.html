@@ -1,0 +1,205 @@
+<div class="page-topbar">
+  <div>
+    <h1 class="page-title">Quản Lý Đơn Hàng</h1>
+    <p class="page-subtitle">
+      Theo dõi và cập nhật trạng thái đơn hàng
+      <i class="live-dot" [class.is-off]="!notifications.connected()"></i>
+      <span class="live-text">{{ notifications.connected() ? 'realtime' : 'mất kết nối' }}</span>
+    </p>
+  </div>
+
+  @if (notifications.pendingCount() > 0) {
+    <div class="topbar-actions">
+      <button class="pending-chip" (click)="filter(keyword(), 'PENDING')">
+        <span class="chip-count">{{ notifications.pendingCount() }}</span>
+        đơn đang chờ duyệt
+      </button>
+
+      <button class="btn btn-black" (click)="approveAllOpen.set(true)">
+        <lucide-angular [img]="CheckCheckIcon" [size]="14" /> Duyệt Tất Cả
+      </button>
+    </div>
+  }
+</div>
+
+<app-modal
+  [isOpen]="approveAllOpen()"
+  type="confirm"
+  title="Duyệt Tất Cả Đơn Chờ"
+  [message]="'Duyệt toàn bộ ' + notifications.pendingCount() + ' đơn đang chờ?\nĐơn thanh toán online chưa nhận được tiền sẽ được bỏ qua, không bị duyệt nhầm.'"
+  confirmText="Duyệt Tất Cả"
+  cancelText="Để Sau"
+  [isLoading]="approvingAll()"
+  (confirm)="approveAll()"
+  (close)="approveAllOpen.set(false)"
+/>
+
+<!-- Tìm kiếm & Lọc -->
+<div class="toolbar">
+  <div class="search-box">
+    <lucide-angular [img]="SearchIcon" [size]="16" class="search-icon" />
+    <input placeholder="Tìm mã đơn, khách, SĐT, địa chỉ..."
+           [ngModel]="keyword()" (ngModelChange)="filter($event, statusFilter())" />
+  </div>
+
+  <select [ngModel]="statusFilter()" (ngModelChange)="filter(keyword(), $event)">
+    <option value="ALL">Tất cả trạng thái</option>
+    @for (status of statuses; track status) {
+      <option [value]="status">{{ statusLabel(status) }}</option>
+    }
+  </select>
+
+  <button class="btn btn-outline" (click)="loadOrders()">
+    <lucide-angular [img]="RefreshIcon" [size]="15" /> Làm Mới
+  </button>
+</div>
+
+<!-- Bảng đơn hàng -->
+<div class="table-container">
+  @if (loading() && !orders().length) {
+    <div class="status-state">Đang tải đơn hàng...</div>
+  } @else if (!filtered().length) {
+    <div class="status-state">Không có đơn hàng nào phù hợp.</div>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Mã Đơn</th>
+          <th>Khách Hàng</th>
+          <th>Tổng Tiền</th>
+          <th>Trạng Thái Đơn</th>
+          <th>Thanh Toán</th>
+          <th>Ngày Đặt</th>
+          <th class="text-right">Thao Tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of paged(); track order.id) {
+          <tr [class.row-new]="notifications.isUnseen(order.id)">
+            <td class="cell-bold">{{ shortId(order.id) }}</td>
+            <td>
+              <div class="cell-bold">{{ order.customerName }}</div>
+              <div class="cell-muted">{{ order.phone }}</div>
+            </td>
+            <td class="cell-bold">{{ order.totalAmount | currency:'VND':'symbol':'1.0-0' }}</td>
+            <td><span [class]="statusClass(order.status)">{{ statusLabel(order.status) }}</span></td>
+            <td>
+              <span class="badge badge-info">{{ order.paymentMethod }}</span>
+              <span [class]="paymentClass(order.paymentStatus)">{{ order.paymentStatus }}</span>
+            </td>
+            <td class="cell-muted">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <div class="actions">
+                @if (order.status === 'PENDING' && isAwaitingPayment(order)) {
+                  <span class="hint-wait">Chờ thanh toán</span>
+                }
+                @if (canConfirm(order)) {
+                  <button class="btn btn-sm btn-black" title="Duyệt đơn hàng"
+                          [disabled]="busyId() === order.id" (click)="changeStatus(order, 'CONFIRMED')">
+                    <lucide-angular [img]="CheckIcon" [size]="14" /> Duyệt
+                  </button>
+                }
+                @if (canShip(order)) {
+                  <button class="btn btn-sm btn-black" title="Bắt đầu vận chuyển"
+                          [disabled]="busyId() === order.id" (click)="changeStatus(order, 'SHIPPING')">
+                    <lucide-angular [img]="TruckIcon" [size]="14" />
+                  </button>
+                }
+                @if (canDeliver(order)) {
+                  <button class="btn btn-sm btn-black" title="Giao hàng thành công"
+                          [disabled]="busyId() === order.id" (click)="changeStatus(order, 'DELIVERED')">
+                    <lucide-angular [img]="CheckIcon" [size]="14" />
+                  </button>
+                }
+                @if (canCancel(order)) {
+                  <button class="btn btn-sm btn-danger" title="Huỷ đơn hàng"
+                          [disabled]="busyId() === order.id" (click)="changeStatus(order, 'CANCELLED')">
+                    <lucide-angular [img]="BanIcon" [size]="14" />
+                  </button>
+                }
+                <button class="btn btn-sm btn-outline" title="Xem chi tiết" (click)="detail.set(order)">
+                  <lucide-angular [img]="EyeIcon" [size]="14" /> Chi Tiết
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <app-pagination [currentPage]="page()" [pageSize]="pageSize"
+                    [totalItems]="filtered().length" (pageChange)="page.set($event)" />
+  }
+</div>
+
+<!-- Modal chi tiết đơn hàng -->
+@if (detail(); as order) {
+  <div class="modal-overlay" (click)="detail.set(null)">
+    <div class="modal-box modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h3>Chi Tiết Đơn {{ shortId(order.id) }}</h3>
+        <button class="icon-btn" (click)="detail.set(null)"><lucide-angular [img]="XIcon" [size]="18" /></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="info-grid">
+          <div><span class="label">Khách hàng</span><span class="val">{{ order.customerName }}</span></div>
+          <div><span class="label">Số điện thoại</span><span class="val">{{ order.phone }}</span></div>
+          <div><span class="label">Email</span><span class="val">{{ order.customerEmail || '—' }}</span></div>
+          <div>
+            <span class="label">Thanh toán</span>
+            <span class="val">{{ order.paymentMethod }} · {{ order.paymentStatus }}</span>
+          </div>
+          <div><span class="label">Địa chỉ giao hàng</span><span class="val">{{ order.shippingAddress }}</span></div>
+          <div><span class="label">Ngày đặt</span><span class="val">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</span></div>
+        </div>
+
+        @if (order.note) {
+          <div class="note-box"><strong>Ghi chú:</strong> {{ order.note }}</div>
+        }
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Sản Phẩm</th>
+              <th>Đơn Giá</th>
+              <th>Số Lượng</th>
+              <th class="text-right">Thành Tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of order.orderItems; track item.id) {
+              <tr>
+                <td class="cell-bold">{{ item.productName }}</td>
+                <td>{{ item.price | currency:'VND':'symbol':'1.0-0' }}</td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-right cell-bold">{{ item.subtotal | currency:'VND':'symbol':'1.0-0' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <div class="total-row">
+          <div>
+            <span>Phí giao hàng:</span>
+            <strong>{{ order.shippingFee | currency:'VND':'symbol':'1.0-0' }}</strong>
+          </div>
+          <div>
+            <span>Tổng cộng:</span>
+            <strong class="total-amount">{{ order.totalAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        @if (canConfirm(order)) {
+          <button class="btn btn-black" [disabled]="busyId() === order.id"
+                  (click)="changeStatus(order, 'CONFIRMED'); detail.set(null)">
+            <lucide-angular [img]="CheckIcon" [size]="15" /> Duyệt Đơn Này
+          </button>
+        }
+        <button class="btn btn-outline" (click)="detail.set(null)">Đóng</button>
+      </div>
+    </div>
+  </div>
+}

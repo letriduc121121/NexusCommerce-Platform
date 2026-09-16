@@ -1,0 +1,235 @@
+.overview-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.page-title-box {
+  .page-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #000000;
+    margin: 0 0 4px 0;
+    text-transform: none;
+  }
+
+  .page-subtitle {
+    font-size: 0.85rem;
+    color: #666666;
+    margin: 0;
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 4px;
+    background-color: #000000;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #666666;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #000000;
+    margin: 2px 0 0 0;
+  }
+
+  /* Thẻ đơn chờ duyệt: chuyển sang tông cảnh báo khi còn đơn tồn. */
+  &.stat-alert.has-pending {
+    border-color: #fed7aa;
+    background: #fffbf5;
+
+    .stat-icon { background-color: #dc2626; }
+    .stat-value { color: #b45309; }
+  }
+}
+
+.overview-section {
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #000000;
+      margin: 0;
+      text-transform: none;
+    }
+
+    .link-more {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #000000;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.table-card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  overflow: hidden;
+
+  .status-box {
+    padding: 32px;
+    text-align: center;
+    color: #777777;
+    font-size: 0.88rem;
+  }
+
+  .empty-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: #9ca3af;
+  }
+
+  .simple-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      text-align: left;
+    }
+
+    th {
+      background-color: #fafafa;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #555555;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .font-medium {
+      font-weight: 500;
+      color: #000000;
+    }
+
+    .tag-role {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background-color: #f4f4f5;
+      color: #333333;
+
+      &.is-admin {
+        background-color: #000000;
+        color: #ffffff;
+      }
+    }
+
+    .tag-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      border: 1px solid #e5e5e5;
+      color: #000000;
+
+      &.is-locked {
+        background-color: #f4f4f5;
+        color: #777777;
+        border-color: #e5e5e5;
+      }
+    }
+
+    .tag-pay {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      background-color: #fef3c7;
+      color: #b45309;
+
+      &.is-paid { background-color: #dcfce7; color: #15803d; }
+    }
+
+    .clickable {
+      cursor: pointer;
+      &:hover td { background-color: #fafafa; }
+    }
+
+    .text-right { text-align: right; color: #9ca3af; }
+  }
+}
+
+/* Chấm báo kết nối realtime & đánh dấu đơn chưa xem. */
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16a34a;
+  animation: blink 1.8s ease-in-out infinite;
+
+  &.is-off { background: #d4d4d8; animation: none; }
+}
+
+.new-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #dc2626;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
