@@ -165,6 +165,28 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
+    .user-coins-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 4px 10px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      color: #b45309;
+
+      lucide-angular {
+        color: #d97706;
+      }
+
+      strong {
+        color: #92400e;
+        font-weight: 700;
+      }
+    }
   }
 
   .dropdown-divider {

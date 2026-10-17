@@ -111,6 +111,12 @@
                     <lucide-angular [img]="CheckIcon" [size]="14" />
                   </button>
                 }
+                @if (canRefund(order)) {
+                  <button class="btn btn-sm btn-purple" title="Xác nhận Trả hàng / Hoàn tiền"
+                          [disabled]="busyId() === order.id" (click)="refundOrder(order)">
+                    <lucide-angular [img]="RefreshIcon" [size]="14" /> Hoàn Tiền
+                  </button>
+                }
                 @if (canCancel(order)) {
                   <button class="btn btn-sm btn-danger" title="Huỷ đơn hàng"
                           [disabled]="busyId() === order.id" (click)="changeStatus(order, 'CANCELLED')">
@@ -196,6 +202,12 @@
           <button class="btn btn-black" [disabled]="busyId() === order.id"
                   (click)="changeStatus(order, 'CONFIRMED'); detail.set(null)">
             <lucide-angular [img]="CheckIcon" [size]="15" /> Duyệt Đơn Này
+          </button>
+        }
+        @if (canRefund(order)) {
+          <button class="btn btn-purple" [disabled]="busyId() === order.id"
+                  (click)="refundOrder(order); detail.set(null)">
+            <lucide-angular [img]="RefreshIcon" [size]="15" /> Trả Hàng / Hoàn Tiền
           </button>
         }
         <button class="btn btn-outline" (click)="detail.set(null)">Đóng</button>

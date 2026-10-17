@@ -64,11 +64,22 @@ export const routes: Routes = [
             title: 'AULA SHOP | Lịch Sử Đơn Hàng'
           },
           {
+            path: 'orders/review/:orderItemId',
+            loadComponent: () => import('./features/profile/write-review/write-review.component').then(m => m.WriteReviewComponent),
+            title: 'AULA SHOP | Viết Đánh Giá Sản Phẩm'
+          },
+          {
             path: 'change-password',
             loadComponent: () => import('./features/profile/change-password/change-password.component').then(m => m.ChangePasswordComponent),
             title: 'AULA SHOP | Đổi Mật Khẩu'
           }
         ]
+      },
+      {
+        path: 'review/:orderItemId',
+        canActivate: [authGuard],
+        loadComponent: () => import('./features/profile/write-review/write-review.component').then(m => m.WriteReviewComponent),
+        title: 'AULA SHOP | Viết Đánh Giá Sản Phẩm'
       }
     ]
   },

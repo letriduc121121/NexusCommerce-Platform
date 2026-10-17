@@ -28,6 +28,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // SockJS bắt tay bằng nhiều request phụ không kèm header Authorization.
                 .requestMatchers("/ws-orders/**", "/error").permitAll()
+                // Cho phép product_service gọi API xác minh mua hàng nội bộ
+                .requestMatchers("/api/v1/orders/verify-purchase").permitAll()
                 // Xem toàn bộ đơn và đổi trạng thái là quyền riêng của Admin.
                 .requestMatchers(HttpMethod.GET, "/api/v1/orders/admin").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/v1/orders/admin/approve-all").hasRole("ADMIN")

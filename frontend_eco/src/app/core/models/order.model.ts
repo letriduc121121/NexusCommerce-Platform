@@ -1,6 +1,6 @@
 /** Khớp 1-1 với order_service: entity Order / OrderItem và dto OrderRequest. */
 
-export const ORDER_STATUSES = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'CANCELLED'] as const;
+export const ORDER_STATUSES = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'REFUNDED', 'CANCELLED'] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 export const ORDER_PAYMENT_STATUSES = ['PENDING', 'PAID', 'FAILED'] as const;
@@ -22,6 +22,8 @@ export interface Order {
   status: OrderStatus;
   subtotal?: number;
   discountAmount?: number;
+  coinsUsed?: number;
+  coinsDiscountAmount?: number;
   voucherCode?: string;
   totalAmount: number;
   customerName: string;
@@ -53,6 +55,8 @@ export interface CreateOrderRequest {
   note?: string;
   paymentMethod?: string;
   voucherCode?: string;
+  useCoins?: boolean;
+  coinsToUse?: number;
   items: CreateOrderItemRequest[];
 }
 

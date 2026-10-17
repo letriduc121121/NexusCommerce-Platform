@@ -46,3 +46,6 @@ cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME:your-cloud-name}
   api-key: ${CLOUDINARY_API_KEY:your-api-key}
   api-secret: ${CLOUDINARY_API_SECRET:your-api-secret}
+
+order-service:
+  url: ${ORDER_SERVICE_URL:http://localhost:8082}

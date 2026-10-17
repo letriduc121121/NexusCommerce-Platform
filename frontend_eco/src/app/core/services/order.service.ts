@@ -46,4 +46,9 @@ export class OrderService {
   approveAllPending(): Observable<BulkApprovalResult> {
     return this.http.put<BulkApprovalResult>(API_ENDPOINTS.orders.approveAll, {});
   }
+
+  /** Admin xác nhận trả hàng / hoàn tiền (DELIVERED -> REFUNDED). */
+  refundOrder(id: string): Observable<Order> {
+    return this.http.put<Order>(API_ENDPOINTS.orders.refund(id), {});
+  }
 }

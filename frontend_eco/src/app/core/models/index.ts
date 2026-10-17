@@ -5,3 +5,5 @@ export * from './order.model';
 export * from './notification.model';
 export * from './inventory.model';
 export * from './voucher.model';
+export * from './review.model';
+

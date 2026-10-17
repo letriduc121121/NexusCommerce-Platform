@@ -25,4 +25,10 @@ public interface OrderService {
 
     /** Danh sách cho Admin, lọc theo trạng thái nếu có (null / rỗng = lấy tất cả). */
     List<Order> getAllOrders(String status);
+
+    /** API xác minh món hàng trong đơn có đủ điều kiện đánh giá không (Status = DELIVERED, trong 30 ngày). */
+    com.ecommerce.order.dto.VerifyPurchaseResponse verifyPurchase(UUID orderItemId, UUID userId);
+
+    /** Admin xác nhận trả hàng / hoàn tiền (DELIVERED -> REFUNDED). */
+    Order refundOrder(UUID orderId);
 }

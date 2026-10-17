@@ -2,7 +2,6 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
 import {
   LucideAngularModule,
   ShoppingBag,
@@ -16,7 +15,8 @@ import {
   CheckCircle,
   ArrowLeft,
   Loader2,
-  Package
+  Package,
+  Coins,
 } from 'lucide-angular';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -25,14 +25,14 @@ import { OrderService } from '../../core/services/order.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { ToastService } from '../../core/services/toast.service';
 import { VoucherService } from '../../core/services/voucher.service';
-import { CreateOrderRequest } from '../../core/models';
+import { CreateOrderRequest, UserProfileResponse } from '../../core/models';
 
 @Component({
   selector: 'app-checkout',
   standalone: true,
   imports: [FormsModule, RouterLink, CurrencyPipe, LucideAngularModule],
   templateUrl: './checkout.component.html',
-  styleUrl: './checkout.component.scss'
+  styleUrl: './checkout.component.scss',
 })
 export class CheckoutComponent implements OnInit {
   readonly ShoppingBagIcon = ShoppingBag;
@@ -47,6 +47,7 @@ export class CheckoutComponent implements OnInit {
   readonly ArrowLeftIcon = ArrowLeft;
   readonly Loader2Icon = Loader2;
   readonly PackageIcon = Package;
+  readonly CoinsIcon = Coins;
 
   authService = inject(AuthService);
   cartService = inject(CartService);
@@ -68,14 +69,25 @@ export class CheckoutComponent implements OnInit {
 
   // ===== Voucher =====
   voucherInput = signal('');
-  appliedCode = signal('');          // mã đã áp thành công ('' = chưa áp)
+  appliedCode = signal('');
   discountAmount = signal(0);
-  voucherMessage = signal('');       // thông báo lỗi / thành công
+  voucherMessage = signal('');
   isCheckingVoucher = signal(false);
 
-  /** Tổng phải trả sau khi trừ giảm giá. */
+  // ===== Xu Tích Lũy =====
+  useCoins = signal(false);
+  userCoins = signal(0);
+
+  /** Số tiền giảm giá từ Xu: 1 Xu = 1 VNĐ, tối đa không quá tổng tiền sau voucher. */
+  coinsDiscount = computed(() => {
+    if (!this.useCoins()) return 0;
+    const currentSub = Math.max(0, this.cartService.totalAmount() - this.discountAmount());
+    return Math.min(currentSub, this.userCoins());
+  });
+
+  /** Tổng phải trả sau khi trừ Voucher và Xu thưởng. */
   finalTotal = computed(() =>
-    Math.max(0, this.cartService.totalAmount() - this.discountAmount())
+    Math.max(0, this.cartService.totalAmount() - this.discountAmount() - this.coinsDiscount())
   );
 
   applyVoucher(): void {
@@ -87,13 +99,13 @@ export class CheckoutComponent implements OnInit {
     this.voucherMessage.set('');
 
     this.voucherService.preview(code, userId, this.cartService.totalAmount()).subscribe({
-      next: res => {
+      next: (res) => {
         this.isCheckingVoucher.set(false);
         this.appliedCode.set(res.voucherCode);
         this.discountAmount.set(res.discountAmount);
         this.voucherMessage.set(res.message);
       },
-      error: err => {
+      error: (err) => {
         this.isCheckingVoucher.set(false);
         this.clearVoucher();
         this.voucherMessage.set(err?.error?.message || 'Mã không hợp lệ.');
@@ -110,7 +122,10 @@ export class CheckoutComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.authService.isLoggedIn()) {
-      this.toastService.showWarning('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để tiến hành đặt hàng');
+      this.toastService.showWarning(
+        'Yêu cầu đăng nhập',
+        'Vui lòng đăng nhập để tiến hành đặt hàng'
+      );
       this.router.navigate(['/login']);
       return;
     }
@@ -123,16 +138,23 @@ export class CheckoutComponent implements OnInit {
       this.shippingAddress.set(user.address || '');
     }
 
-    // Đảm bảo giỏ hàng đã được nạp
-    this.cartService.loadCart().subscribe({
-      error: () => {}
+    // Load profile mới nhất để lấy số Xu tích lũy
+    this.authService.fetchProfile().subscribe({
+      next: (p: UserProfileResponse | null) => {
+        if (p?.rewardCoins) this.userCoins.set(p.rewardCoins);
+      },
     });
+
+    this.cartService.loadCart().subscribe({ error: () => {} });
   }
 
   onSubmit(): void {
     const cart = this.cartService.cart();
     if (!cart || !cart.items || cart.items.length === 0) {
-      this.toastService.showWarning('Giỏ hàng trống', 'Vui lòng thêm sản phẩm vào giỏ hàng trước khi đặt');
+      this.toastService.showWarning(
+        'Giỏ hàng trống',
+        'Vui lòng thêm sản phẩm vào giỏ hàng trước khi đặt'
+      );
       return;
     }
 
@@ -159,13 +181,15 @@ export class CheckoutComponent implements OnInit {
       note: this.note().trim() || undefined,
       paymentMethod: this.paymentMethod(),
       voucherCode: this.appliedCode() || undefined,
-      items: cart.items.map(item => ({
+      useCoins: this.useCoins(),
+      coinsToUse: this.coinsDiscount(),
+      items: cart.items.map((item) => ({
         productId: item.productId || (item.id as string),
         productName: item.productName,
         imageUrl: item.imageUrl,
         price: item.price,
-        quantity: item.quantity
-      }))
+        quantity: item.quantity,
+      })),
     };
 
     this.isSubmitting.set(true);
@@ -180,26 +204,36 @@ export class CheckoutComponent implements OnInit {
                 window.location.href = res.paymentUrl;
               } else {
                 this.isSubmitting.set(false);
-                this.toastService.showError('Lỗi thanh toán', 'Không lấy được liên kết VNPAY. Vui lòng thử lại.');
+                this.toastService.showError(
+                  'Lỗi thanh toán',
+                  'Không lấy được liên kết VNPAY. Vui lòng thử lại.'
+                );
               }
             },
             error: (err) => {
               this.isSubmitting.set(false);
-              this.toastService.showError('Lỗi thanh toán', err?.error?.message || 'Không thể khởi tạo thanh toán VNPAY');
-            }
+              this.toastService.showError(
+                'Lỗi thanh toán',
+                err?.error?.message || 'Không thể khởi tạo thanh toán VNPAY'
+              );
+            },
           });
         } else {
           this.isSubmitting.set(false);
-          this.toastService.showSuccess('Đặt hàng thành công', `Đơn hàng #${order.id.substring(0, 8)} đã được khởi tạo`);
+          this.toastService.showSuccess(
+            'Đặt hàng thành công',
+            `Đơn hàng #${order.id.substring(0, 8)} đã được khởi tạo`
+          );
           this.cartService.loadCart().subscribe();
           this.router.navigate(['/checkout/success'], { state: { order } });
         }
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        const errorMsg = err?.error?.message || 'Không thể khởi tạo đơn hàng. Vui lòng kiểm tra lại.';
+        const errorMsg =
+          err?.error?.message || 'Không thể khởi tạo đơn hàng. Vui lòng kiểm tra lại.';
         this.toastService.showError('Lỗi đặt hàng', errorMsg);
-      }
+      },
     });
   }
 }

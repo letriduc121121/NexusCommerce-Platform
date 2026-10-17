@@ -19,6 +19,7 @@ export interface AuthResponse {
   userId: string;
   email: string;
   role: string;
+  rewardCoins?: number;
 }
 
 export interface UserProfileResponse {
@@ -28,6 +29,7 @@ export interface UserProfileResponse {
   phone?: string;
   address?: string;
   avatarUrl?: string;
+  rewardCoins?: number;
   status: string; // 'ACTIVE' | 'LOCKED'
   role: string;   // 'ADMIN' | 'USER'
   createdAt?: string;

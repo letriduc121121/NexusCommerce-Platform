@@ -1,19 +1,38 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
-import { LucideAngularModule, AlertCircle, Calendar, CheckCircle, ChevronRight, Clock, CreditCard, Package, Truck, X } from 'lucide-angular';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { CurrencyPipe, DatePipe, CommonModule } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import {
+  LucideAngularModule,
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  ChevronRight,
+  Clock,
+  CreditCard,
+  Package,
+  Truck,
+  X,
+  Coins,
+  Star,
+  Camera,
+  MessageSquare,
+  Sparkles,
+} from 'lucide-angular';
 
 import { OrderService } from '../../../core/services/order.service';
+import { ReviewService } from '../../../core/services/review.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { Order } from '../../../core/models';
+import { Order, OrderItem } from '../../../core/models';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 
-/** Đơn còn ở 2 trạng thái này thì khách được tự huỷ - khớp với quy tắc ở order-service. */
 const CUSTOMER_CANCELLABLE_STATUSES = new Set(['PENDING', 'CONFIRMED']);
 
 @Component({
   selector: 'app-order-history',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, LucideAngularModule, ModalComponent],
+  imports: [CommonModule, CurrencyPipe, DatePipe, FormsModule, LucideAngularModule, ModalComponent],
   templateUrl: './order-history.component.html',
   styleUrl: './order-history.component.scss',
 })
@@ -27,26 +46,53 @@ export class OrderHistoryComponent implements OnInit {
   readonly ClockIcon = Clock;
   readonly AlertCircleIcon = AlertCircle;
   readonly XIcon = X;
+  readonly CoinsIcon = Coins;
+  readonly StarIcon = Star;
+  readonly CameraIcon = Camera;
+  readonly MessageSquareIcon = MessageSquare;
+  readonly SparklesIcon = Sparkles;
 
+  private readonly router = inject(Router);
   private readonly orderService = inject(OrderService);
+  private readonly reviewService = inject(ReviewService);
+  private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
 
   readonly orders = signal<Order[]>([]);
+  readonly reviewedOrderItemIds = signal<Set<string>>(new Set());
   readonly cancelTarget = signal<Order | null>(null);
   readonly isCancelling = signal(false);
 
   ngOnInit(): void {
+    this.authService.fetchProfile().subscribe();
     this.loadOrders();
+    this.loadReviewedItems();
   }
 
   loadOrders(): void {
     this.orderService.getMyOrders().subscribe({
-      next: data => this.orders.set(data ?? []),
+      next: (data) => this.orders.set(data ?? []),
       error: () => this.orders.set([]),
     });
   }
 
-  /** Khách chỉ tự huỷ được khi đơn chưa được giao cho đơn vị vận chuyển. */
+  loadReviewedItems(): void {
+    this.reviewService.getMyReviewedOrderItemIds().subscribe({
+      next: (ids) => {
+        if (Array.isArray(ids)) {
+          this.reviewedOrderItemIds.set(new Set(ids.map((id) => String(id).toLowerCase())));
+        }
+      },
+      error: () => {
+        this.reviewedOrderItemIds.set(new Set());
+      },
+    });
+  }
+
+  isItemReviewed(orderItemId: string): boolean {
+    return this.reviewedOrderItemIds().has(String(orderItemId).toLowerCase());
+  }
+
   canCancel(order: Order): boolean {
     return CUSTOMER_CANCELLABLE_STATUSES.has(order.status);
   }
@@ -64,14 +110,26 @@ export class OrderHistoryComponent implements OnInit {
       next: () => {
         this.isCancelling.set(false);
         this.cancelTarget.set(null);
-        this.toastService.showSuccess('Đã huỷ đơn hàng', `Đơn #${order.id.slice(0, 8).toUpperCase()} đã được huỷ`);
+        this.toastService.showSuccess(
+          'Đã huỷ đơn hàng',
+          `Đơn #${order.id.slice(0, 8).toUpperCase()} đã được huỷ`
+        );
         this.loadOrders();
       },
-      error: err => {
+      error: (err) => {
         this.isCancelling.set(false);
         this.cancelTarget.set(null);
-        this.toastService.showError('Không thể huỷ đơn', err?.error?.message || 'Vui lòng thử lại sau');
+        this.toastService.showError(
+          'Không thể huỷ đơn',
+          err?.error?.message || 'Vui lòng thử lại sau'
+        );
       },
+    });
+  }
+
+  goToReview(item: OrderItem, order: Order): void {
+    this.router.navigate(['/review', item.id], {
+      state: { item, order },
     });
   }
 

@@ -18,6 +18,7 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   CONFIRMED: 'Đã duyệt',
   SHIPPING: 'Đang giao',
   DELIVERED: 'Đã giao',
+  REFUNDED: 'Trả hàng/Hoàn tiền',
   CANCELLED: 'Đã hủy',
 };
 
@@ -26,6 +27,7 @@ const STATUS_BADGES: Record<OrderStatus, string> = {
   CONFIRMED: 'badge-info',
   SHIPPING: 'badge-info',
   DELIVERED: 'badge-success',
+  REFUNDED: 'badge-purple',
   CANCELLED: 'badge-danger',
 };
 
@@ -190,6 +192,29 @@ export class OrderManagementComponent implements OnInit, OnDestroy {
 
   canCancel(order: Order): boolean {
     return order.status === 'PENDING' || order.status === 'CONFIRMED';
+  }
+
+  canRefund(order: Order): boolean {
+    return order.status === 'DELIVERED';
+  }
+
+  refundOrder(order: Order): void {
+    this.busyId.set(order.id);
+    this.orderService.refundOrder(order.id).subscribe({
+      next: () => {
+        this.busyId.set(null);
+        this.toastService.showSuccess(
+          'Trả hàng / Hoàn tiền thành công',
+          `Đơn #${this.shortId(order.id)} → Trả hàng / Hoàn tiền`
+        );
+        this.loadOrders();
+        this.notifications.reload();
+      },
+      error: err => {
+        this.busyId.set(null);
+        this.toastService.showError('Không thể hoàn tiền', err?.error?.message || 'Vui lòng thử lại sau');
+      },
+    });
   }
 
   /** Đơn thanh toán online chưa nhận được tiền thì backend từ chối duyệt. */

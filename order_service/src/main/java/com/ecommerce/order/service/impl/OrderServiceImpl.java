@@ -6,9 +6,13 @@ import com.ecommerce.order.client.PromotionClient;
 import com.ecommerce.order.dto.BulkApprovalResult;
 import com.ecommerce.order.dto.OrderItemRequest;
 import com.ecommerce.order.dto.OrderRequest;
+import com.ecommerce.order.dto.VerifyPurchaseResponse;
 import com.ecommerce.order.entity.Order;
 import com.ecommerce.order.entity.OrderItem;
+import com.ecommerce.order.event.CoinsRedeemedEvent;
+import com.ecommerce.order.event.CoinsRefundedEvent;
 import com.ecommerce.order.event.OrderEventPayload;
+import com.ecommerce.order.repository.OrderItemRepository;
 import com.ecommerce.order.repository.OrderRepository;
 import com.ecommerce.order.service.OrderService;
 import com.ecommerce.order.websocket.OrderNotifier;
@@ -20,9 +24,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -46,14 +52,16 @@ public class OrderServiceImpl implements OrderService {
             "PENDING", Set.of("CONFIRMED", "CANCELLED"),
             "CONFIRMED", Set.of("SHIPPING", "CANCELLED"),
             "SHIPPING", Set.of("DELIVERED"),
-            "DELIVERED", Set.of(),
+            "DELIVERED", Set.of("REFUNDED"),
+            "REFUNDED", Set.of(),
             "CANCELLED", Set.of());
 
     /** Ngoài đời khách chỉ tự huỷ được khi đơn chưa được giao cho đơn vị vận chuyển. */
     private static final Set<String> CUSTOMER_CANCELLABLE = Set.of("PENDING", "CONFIRMED");
 
     private final OrderRepository orderRepository;
-    private final KafkaTemplate<String, OrderEventPayload> kafkaTemplate;
+    private final OrderItemRepository orderItemRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final InventoryClient inventoryClient;
     private final PromotionClient promotionClient;
     private final OrderNotifier orderNotifier;
@@ -61,25 +69,30 @@ public class OrderServiceImpl implements OrderService {
     // ==================== TẠO ĐƠN ====================
 
     /**
-     * Vòng đời: sinh mã đơn -> giữ kho -> trừ voucher -> lưu đơn PENDING -> bắn Kafka.
-     * Hỏng ở bước nào thì hoàn lại đúng những gì đã làm trước đó (kho, voucher).
+     * Vòng đời: sinh mã đơn -> giữ kho -> trừ voucher -> trừ Xu tích lũy -> lưu đơn PENDING -> bắn Kafka.
      */
     @Override
+    @Transactional
     public Order createOrder(UUID userId, OrderRequest request) {
         UUID orderId = UUID.randomUUID();
         List<Map<String, Object>> stockItems = toStockItems(request.getItems());
         BigDecimal subtotal = calcSubtotal(request.getItems());
 
-        // 1. Giữ chỗ tồn kho. Hết hàng -> ném lỗi, chưa có gì để dọn.
+        // 1. Giữ chỗ tồn kho. Hết hàng -> ném lỗi
         inventoryClient.reserve(orderId, stockItems);
 
-        // 2. Trừ lượt voucher (nếu có mã). Hỏng -> nhả kho rồi ném lỗi.
+        // 2. Trừ lượt voucher (nếu có mã)
         DiscountResult discount = applyVoucher(request.getVoucherCode(), userId, orderId, subtotal, stockItems);
 
-        // 3. Lưu đơn + phát sự kiện. Hỏng -> hoàn cả voucher lẫn kho.
+        // 3. Lưu đơn + phát sự kiện
         try {
             Order order = orderRepository.save(buildOrder(orderId, userId, request, subtotal, discount));
             log.info("✅ Đã tạo đơn hàng {} - chờ Admin duyệt", order.getId());
+
+            // Nếu người dùng chọn dùng Xu -> phát sự kiện tiêu Xu
+            if (order.getCoinsUsed() != null && order.getCoinsUsed() > 0) {
+                publishCoinsRedeemedEvent(order);
+            }
 
             publishEvent("ORDER_CREATED", order);
             orderNotifier.newOrder(order);
@@ -91,7 +104,6 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    /** Trả về null nếu không dùng voucher. Ném lỗi (kèm nhả kho) nếu voucher không hợp lệ. */
     private DiscountResult applyVoucher(String voucherCode, UUID userId, UUID orderId,
                                        BigDecimal subtotal, List<Map<String, Object>> stockItems) {
         if (voucherCode == null || voucherCode.isBlank()) {
@@ -135,6 +147,64 @@ public class OrderServiceImpl implements OrderService {
                 : orderRepository.findByStatusOrderByCreatedAtDesc(status.toUpperCase());
     }
 
+    // ==================== XÁC MINH MUA HÀNG (DÙNG CHO REVIEW) ====================
+
+    @Override
+    @Transactional(readOnly = true)
+    public VerifyPurchaseResponse verifyPurchase(UUID orderItemId, UUID userId) {
+        log.info("🔍 [ORDER SERVICE] Xác minh mua hàng: orderItemId={}, userId={}", orderItemId, userId);
+        Optional<OrderItem> itemOpt = orderItemRepository.findByIdAndOrderUserId(orderItemId, userId);
+        if (itemOpt.isEmpty()) {
+            return VerifyPurchaseResponse.builder()
+                    .eligible(false)
+                    .message("Không tìm thấy thông tin sản phẩm trong đơn hàng của người dùng!")
+                    .build();
+        }
+        OrderItem item = itemOpt.get();
+        Order order = item.getOrder();
+
+        if (!"DELIVERED".equalsIgnoreCase(order.getStatus())) {
+            return VerifyPurchaseResponse.builder()
+                    .eligible(false)
+                    .message("Đơn hàng chưa được giao thành công!")
+                    .build();
+        }
+
+        if (order.getUpdatedAt() != null && order.getUpdatedAt().isBefore(LocalDateTime.now().minusDays(30))) {
+            return VerifyPurchaseResponse.builder()
+                    .eligible(false)
+                    .message("Đã quá thời hạn 30 ngày kể từ khi nhận hàng, không thể đánh giá!")
+                    .build();
+        }
+
+        return VerifyPurchaseResponse.builder()
+                .eligible(true)
+                .orderItemId(item.getId().toString())
+                .orderId(order.getId().toString())
+                .productId(item.getProductId().toString())
+                .userId(userId.toString())
+                .message("Đủ điều kiện đánh giá!")
+                .build();
+    }
+
+    // ==================== TRẢ HÀNG / HOÀN TIỀN (ADMIN) ====================
+
+    @Override
+    @Transactional
+    public Order refundOrder(UUID orderId) {
+        log.info("🔄 [ORDER SERVICE - ADMIN] Xác nhận Trả hàng / Hoàn tiền cho đơn: {}", orderId);
+        Order order = findOrThrow(orderId);
+        if (!"DELIVERED".equals(order.getStatus())) {
+            throw new IllegalStateException("Chỉ đơn hàng đã giao (DELIVERED) mới có thể chuyển sang Trả hàng / Hoàn tiền!");
+        }
+        order.setStatus("REFUNDED");
+        Order updated = orderRepository.save(order);
+
+        publishEvent("ORDER_REFUNDED", updated);
+        orderNotifier.orderUpdated(updated);
+        return updated;
+    }
+
     // ==================== HUỶ ĐƠN (KHÁCH TỰ THAO TÁC) ====================
 
     @Override
@@ -152,12 +222,15 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus("CANCELLED");
         Order updated = orderRepository.save(order);
 
+        if (order.getCoinsUsed() != null && order.getCoinsUsed() > 0) {
+            publishCoinsRefundedEvent(order);
+        }
+
         publishEvent("ORDER_CANCELLED", updated);
         orderNotifier.orderUpdated(updated);
         return updated;
     }
 
-    /** Thông báo rõ vì sao không huỷ được, thay vì một câu lỗi kỹ thuật chung. */
     private String customerCancelRejectReason(String status) {
         return switch (status) {
             case "SHIPPING" -> "Đơn hàng đang được vận chuyển, không thể tự huỷ. Vui lòng liên hệ CSKH!";
@@ -188,18 +261,23 @@ public class OrderServiceImpl implements OrderService {
 
         Order updated = orderRepository.save(order);
 
-        // Kafka: chỉ những mốc kéo theo xử lý ở service khác (hoàn kho, gửi mail).
         if (statusChanged) {
-            if ("CANCELLED".equals(newStatus)) publishEvent("ORDER_CANCELLED", updated);
-            else if ("DELIVERED".equals(newStatus)) publishEvent("ORDER_DELIVERED", updated);
+            if ("CANCELLED".equals(newStatus)) {
+                if (order.getCoinsUsed() != null && order.getCoinsUsed() > 0) {
+                    publishCoinsRefundedEvent(order);
+                }
+                publishEvent("ORDER_CANCELLED", updated);
+            } else if ("DELIVERED".equals(newStatus)) {
+                publishEvent("ORDER_DELIVERED", updated);
+            } else if ("REFUNDED".equals(newStatus)) {
+                publishEvent("ORDER_REFUNDED", updated);
+            }
         }
-        // WebSocket: mọi thay đổi đều đẩy để bảng đơn của Admin không bị lệch.
         orderNotifier.orderUpdated(updated);
 
         return updated;
     }
 
-    /** Chặn nhảy cóc trạng thái, và chặn duyệt đơn VNPay khi tiền chưa về. */
     private void validateTransition(Order order, String currentStatus, String newStatus) {
         if (!ALLOWED_TRANSITIONS.getOrDefault(currentStatus, Set.of()).contains(newStatus)) {
             throw new IllegalStateException(
@@ -210,7 +288,6 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    /** Đơn thanh toán online (VNPay...) mà chưa ghi nhận PAID thì chưa có tiền về. */
     private boolean isAwaitingPayment(Order order) {
         return !COD.equalsIgnoreCase(order.getPaymentMethod()) && !"PAID".equals(order.getPaymentStatus());
     }
@@ -225,7 +302,6 @@ public class OrderServiceImpl implements OrderService {
         int approved = 0;
         int skipped = 0;
         for (Order order : pending) {
-            // Đơn thanh toán online chưa có tiền thì bỏ qua, không chặn cả lượt duyệt.
             if (isAwaitingPayment(order)) {
                 skipped++;
                 continue;
@@ -268,7 +344,17 @@ public class OrderServiceImpl implements OrderService {
 
         BigDecimal discountAmount = discount != null ? discount.discountAmount() : BigDecimal.ZERO;
         String voucherCode = discount != null ? discount.voucherCode() : null;
-        BigDecimal total = subtotal.subtract(discountAmount).max(BigDecimal.ZERO);
+
+        // Tính khấu trừ Xu (1 Xu = 1 VNĐ)
+        Long coinsUsed = 0L;
+        BigDecimal coinsDiscountAmount = BigDecimal.ZERO;
+
+        if (Boolean.TRUE.equals(request.getUseCoins())) {
+            coinsUsed = request.getCoinsToUse() != null ? Math.max(0L, request.getCoinsToUse()) : 0L;
+            coinsDiscountAmount = BigDecimal.valueOf(coinsUsed);
+        }
+
+        BigDecimal total = subtotal.subtract(discountAmount).subtract(coinsDiscountAmount).max(BigDecimal.ZERO);
 
         Order order = Order.builder()
                 .id(orderId)
@@ -282,6 +368,8 @@ public class OrderServiceImpl implements OrderService {
                 .subtotal(subtotal)
                 .discountAmount(discountAmount)
                 .voucherCode(voucherCode)
+                .coinsUsed(coinsUsed)
+                .coinsDiscountAmount(coinsDiscountAmount)
                 .totalAmount(total)
                 .status("PENDING")
                 .paymentStatus("PENDING")
@@ -298,7 +386,6 @@ public class OrderServiceImpl implements OrderService {
                 .toList();
     }
 
-    /** Kafka hỏng không được phép làm hỏng đơn hàng -> nuốt lỗi, chỉ ghi log. */
     private void publishEvent(String eventType, Order order) {
         try {
             OrderEventPayload event = OrderEventPayload.builder()
@@ -315,6 +402,7 @@ public class OrderServiceImpl implements OrderService {
                     .createdAt(order.getCreatedAt())
                     .items(order.getOrderItems().stream()
                             .map(i -> OrderEventPayload.OrderItemPayload.builder()
+                                    .orderItemId(i.getId() != null ? i.getId().toString() : null)
                                     .productId(i.getProductId().toString())
                                     .productName(i.getProductName())
                                     .price(i.getPrice())
@@ -325,9 +413,47 @@ public class OrderServiceImpl implements OrderService {
                     .build();
 
             kafkaTemplate.send("order-topic", order.getId().toString(), event);
+
+            if ("DELIVERED".equalsIgnoreCase(eventType) || "ORDER_DELIVERED".equalsIgnoreCase(eventType)) {
+                kafkaTemplate.send("order-delivered-topic", order.getId().toString(), event);
+            } else if ("REFUNDED".equalsIgnoreCase(eventType) || "ORDER_REFUNDED".equalsIgnoreCase(eventType)) {
+                kafkaTemplate.send("order-refunded-topic", order.getId().toString(), event);
+            }
+
             log.info("📤 Đã phát sự kiện {} cho đơn {}", eventType, order.getId());
         } catch (Exception e) {
             log.error("❌ Không phát được sự kiện {}: {}", eventType, e.getMessage());
         }
     }
+
+    private void publishCoinsRedeemedEvent(Order order) {
+        try {
+            CoinsRedeemedEvent event = CoinsRedeemedEvent.builder()
+                    .orderId(order.getId().toString())
+                    .userId(order.getUserId().toString())
+                    .coinsUsed(order.getCoinsUsed())
+                    .redeemedAt(LocalDateTime.now())
+                    .build();
+            kafkaTemplate.send("coins-redeemed-topic", order.getUserId().toString(), event);
+            log.info("🪙 Đã phát sự kiện CoinsRedeemedEvent cho đơn {}: dùng {} Xu", order.getId(), order.getCoinsUsed());
+        } catch (Exception e) {
+            log.error("❌ Lỗi phát sự kiện CoinsRedeemedEvent: {}", e.getMessage());
+        }
+    }
+
+    private void publishCoinsRefundedEvent(Order order) {
+        try {
+            CoinsRefundedEvent event = CoinsRefundedEvent.builder()
+                    .orderId(order.getId().toString())
+                    .userId(order.getUserId().toString())
+                    .coinsRefunded(order.getCoinsUsed())
+                    .refundedAt(LocalDateTime.now())
+                    .build();
+            kafkaTemplate.send("coins-refunded-topic", order.getUserId().toString(), event);
+            log.info("🪙 Đã phát sự kiện CoinsRefundedEvent cho đơn {}: hoàn {} Xu", order.getId(), order.getCoinsUsed());
+        } catch (Exception e) {
+            log.error("❌ Lỗi phát sự kiện CoinsRefundedEvent: {}", e.getMessage());
+        }
+    }
 }
+

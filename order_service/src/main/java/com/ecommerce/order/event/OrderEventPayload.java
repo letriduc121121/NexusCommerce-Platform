@@ -32,6 +32,7 @@ public class OrderEventPayload {
   @NoArgsConstructor
   @AllArgsConstructor
   public static class OrderItemPayload {
+    private String orderItemId;
     private String productId;
     private String productName;
     private BigDecimal price;

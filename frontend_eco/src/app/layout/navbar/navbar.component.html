@@ -52,6 +52,10 @@
                 <div class="user-info">
                   <p class="user-fullname">{{ authService.currentUser()?.fullName || 'Thành viên' }}</p>
                   <p class="user-email">{{ authService.currentUser()?.email }}</p>
+                  <div class="user-coins-pill">
+                    <lucide-angular [img]="CoinsIcon" [size]="14"></lucide-angular>
+                    <span>Xu tích lũy: <strong>{{ authService.currentUser()?.rewardCoins || 0 }} Xu</strong></span>
+                  </div>
                 </div>
               </div>
               <div class="dropdown-divider"></div>

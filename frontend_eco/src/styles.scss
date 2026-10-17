@@ -6,6 +6,48 @@
 @use 'styles/reset';
 @use 'styles/typography';
 
+@import 'primeicons/primeicons.css';
+
+/* Luxury Custom Overrides for PrimeNG & Dialogs */
+.p-rating .p-rating-item .p-rating-icon {
+  color: #fbbf24 !important;
+  font-size: 1.25rem;
+}
+.p-rating .p-rating-item.p-rating-item-active .p-rating-icon {
+  color: #f59e0b !important;
+}
+
+.p-dialog {
+  border-radius: 16px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+
+  .p-dialog-header {
+    background: #111827 !important;
+    color: #ffffff !important;
+    padding: 1.25rem 1.5rem !important;
+
+    .p-dialog-title {
+      font-weight: 600;
+      letter-spacing: 0.025em;
+    }
+    .p-dialog-header-icon {
+      color: #9ca3af !important;
+      &:hover {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+      }
+    }
+  }
+
+  .p-dialog-content {
+    padding: 1.5rem !important;
+    background: #ffffff !important;
+  }
+}
+
+
 *, *::before, *::after {
   box-sizing: border-box;
 }

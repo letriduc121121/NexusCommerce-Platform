@@ -118,6 +118,7 @@ public class AuthService {
                 .userId(user.getId())
                 .email(user.getEmail())
                 .role(user.getRole().getName())
+                .rewardCoins(user.getRewardCoins() != null ? user.getRewardCoins() : 0L)
                 .build();
     }
 

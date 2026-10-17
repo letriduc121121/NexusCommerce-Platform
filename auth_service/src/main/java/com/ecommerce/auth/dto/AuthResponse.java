@@ -18,4 +18,5 @@ public class AuthResponse {
     private UUID userId;
     private String email;
     private String role;
+    private Long rewardCoins;
 }

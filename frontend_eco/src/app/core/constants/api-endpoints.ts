@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
     byId: (id: string | number) => `${base}/products/${id}`,
     search: `${base}/products/search`,
     byCategory: (categoryId: number) => `${base}/products/category/${categoryId}`,
+    uploadImage: `${base}/products/upload-image`,
   },
   categories: {
     root: `${base}/categories`,
@@ -39,6 +40,7 @@ export const API_ENDPOINTS = {
     approveAll: `${base}/orders/admin/approve-all`,
     status: (id: string | number) => `${base}/orders/${id}/status`,
     cancel: (id: string | number) => `${base}/orders/${id}/cancel`,
+    refund: (id: string | number) => `${base}/orders/${id}/refund`,
   },
   payments: {
     root: `${base}/payments`,
@@ -55,5 +57,20 @@ export const API_ENDPOINTS = {
     status: (id: number) => `${base}/vouchers/${id}/status`,
     preview: `${base}/vouchers/preview`,
     available: `${base}/vouchers/available`,
+  },
+  reviews: {
+    root: `${base}/reviews`,
+    byId: (id: string) => `${base}/reviews/${id}`,
+    byProduct: (productId: string, rating?: number, withImages?: boolean) => {
+      let url = `${base}/products/${productId}/reviews`;
+      const params: string[] = [];
+      if (rating && rating > 0) params.push(`rating=${rating}`);
+      if (withImages) params.push(`withImages=true`);
+      if (params.length > 0) url += `?${params.join('&')}`;
+      return url;
+    },
+    myReviewedItemIds: `${base}/reviews/my-reviewed-order-item-ids`,
+    verifyPurchase: (orderItemId: string, userId: string) =>
+      `${base}/orders/verify-purchase?orderItemId=${orderItemId}&userId=${userId}`,
   },
 } as const;

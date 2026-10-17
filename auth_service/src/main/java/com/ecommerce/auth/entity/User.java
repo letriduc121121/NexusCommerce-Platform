@@ -34,6 +34,10 @@ public class User {
     @Column(nullable = false, length = 20)
     private String status;
 
+    @Builder.Default
+    @Column(name = "reward_coins", nullable = false, columnDefinition = "BIGINT DEFAULT 0")
+    private Long rewardCoins = 0L;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
@@ -49,6 +53,7 @@ public class User {
         if (createdAt == null) createdAt = LocalDateTime.now();
         if (updatedAt == null) updatedAt = LocalDateTime.now();
         if (status == null) status = "ACTIVE";
+        if (rewardCoins == null) rewardCoins = 0L;
     }
 
     @PreUpdate

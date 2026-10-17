@@ -15,7 +15,7 @@ spring:
         - id: product-service
           uri: http://${PRODUCT_SERVICE_HOST:localhost}:8080
           predicates:
-            - Path=/api/v1/products/**, /api/v1/categories/**
+            - Path=/api/v1/products/**, /api/v1/categories/**, /api/v1/reviews/**
 
         - id: order-service
           uri: http://${ORDER_SERVICE_HOST:localhost}:8082

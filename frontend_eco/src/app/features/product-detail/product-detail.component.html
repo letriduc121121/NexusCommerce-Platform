@@ -22,8 +22,19 @@
         </nav>
 
         <h1 class="product-title">{{ p.name }}</h1>
-        <p class="product-price">{{ p.price | currency:'VND':'symbol-narrow':'1.0-0' }}</p>
+        
+        <!-- Đánh giá sao & Lượt bán -->
+        <div class="rating-sales-bar">
+          <div class="star-rating">
+            <lucide-angular [img]="StarIcon" [size]="16" class="star-filled"></lucide-angular>
+            <span class="avg-score">{{ (p.avgRating || 5.0) | number:'1.1-1' }}</span>
+            <span class="total-rev">({{ p.totalReviews || 0 }} đánh giá)</span>
+          </div>
+          <div class="sales-divider">|</div>
+          <div class="sales-count">Đã bán <strong>{{ p.totalSold || 0 }}</strong></div>
+        </div>
 
+        <p class="product-price">{{ p.price | currency:'VND':'symbol-narrow':'1.0-0' }}</p>
         <p class="sku-line">Mã sản phẩm: {{ p.sku }}</p>
 
         @if (p.status === 'ACTIVE') {
@@ -44,13 +55,16 @@
           </div>
         </div>
 
-
         <div class="action-group">
           <button class="btn btn-primary" (click)="addToCart()" [disabled]="p.status !== 'ACTIVE' || isAdding()">
             <lucide-angular [img]="ShoppingBagIcon" [size]="16"></lucide-angular>
             {{ isAdding() ? 'ĐANG THÊM...' : 'THÊM VÀO GIỎ' }}
           </button>
-          <a routerLink="/products" class="btn btn-outline">TIẾP TỤC XEM</a>
+          
+          <button class="btn btn-reward-review" (click)="openReviewModal()">
+            <lucide-angular [img]="CoinsIcon" [size]="16"></lucide-angular>
+            <span>ĐÁNH GIÁ NHẬN 200 XU</span>
+          </button>
         </div>
 
         <!-- Accordion -->
@@ -82,24 +96,110 @@
               </div>
             }
           </div>
-
-          <div class="panel">
-            <button class="panel-head" (click)="togglePanel('warranty')">
-              <span>BẢO HÀNH</span>
-              <lucide-angular [img]="ChevronDownIcon" [size]="18" [class.rotated]="openPanel() === 'warranty'"></lucide-angular>
-            </button>
-            @if (openPanel() === 'warranty') {
-              <div class="panel-body">
-                <ul>
-                  <li>Bảo hành chính hãng 12 tháng.</li>
-                  <li>Hỗ trợ kỹ thuật trọn đời sản phẩm.</li>
-                </ul>
-              </div>
-            }
-          </div>
         </div>
       </div>
     </div>
+
+    <!-- KHU VỰC ĐÁNH GIÁ SẢN PHẨM -->
+    <section class="reviews-section container">
+      <div class="reviews-header-box">
+        <div class="overall-rating">
+          <span class="big-score">{{ (p.avgRating || 5.0) | number:'1.1-1' }}</span>
+          <div class="stars-column">
+            <div class="stars-row">
+              @for (star of [1,2,3,4,5]; track star) {
+                <lucide-angular [img]="StarIcon" [size]="18" class="star-filled"></lucide-angular>
+              }
+            </div>
+            <span class="sub-text">{{ reviews().length }} nhận xét từ khách mua hàng</span>
+          </div>
+        </div>
+
+        <div class="reward-banner">
+          <div class="banner-icon">
+            <lucide-angular [img]="CoinsIcon" [size]="28"></lucide-angular>
+          </div>
+          <div class="banner-text">
+            <h4>Tích Xu Đổi Quà Tặng</h4>
+            <p>Viết nhận xét ≥ 50 ký tự nhận <strong>100 Xu</strong>. Kèm ảnh chụp thực tế nhận thêm <strong>100 Xu</strong> (1 Xu = 1 VNĐ khi thanh toán).</p>
+          </div>
+          <button class="btn btn-sm-reward" (click)="openReviewModal()">
+            <lucide-angular [img]="SparklesIcon" [size]="14"></lucide-angular>
+            Viết Đánh Giá
+          </button>
+        </div>
+      </div>
+
+      <!-- Bộ lọc sao -->
+      <div class="filter-tags">
+        <button class="tag-btn" [class.active]="ratingFilter() === 0" (click)="ratingFilter.set(0)">
+          Tất Cả ({{ reviews().length }})
+        </button>
+        @for (star of [5,4,3,2,1]; track star) {
+          <button class="tag-btn" [class.active]="ratingFilter() === star" (click)="ratingFilter.set(star)">
+            {{ star }} Sao
+          </button>
+        }
+      </div>
+
+      <!-- Danh sách bài đánh giá -->
+      <div class="reviews-list">
+        @if (filteredReviews().length === 0) {
+          <div class="empty-reviews">
+            <lucide-angular [img]="MessageSquareIcon" [size]="32"></lucide-angular>
+            <p>Chưa có đánh giá nào cho mức chọn này.</p>
+          </div>
+        } @else {
+          @for (rev of filteredReviews(); track rev.id) {
+            <div class="review-card">
+              <div class="rev-user-row">
+                <div class="avatar-circle">{{ (rev.userFullName || 'K').substring(0, 1).toUpperCase() }}</div>
+                <div class="user-meta">
+                  <span class="user-name">{{ rev.userFullName || 'Khách hàng' }}</span>
+                  <div class="user-stars">
+                    @for (s of [1,2,3,4,5]; track s) {
+                      <lucide-angular [img]="StarIcon" [size]="14" [class.star-filled]="s <= rev.rating" [class.star-empty]="s > rev.rating"></lucide-angular>
+                    }
+                  </div>
+                  @if (rev.variantInfo) {
+                    <span class="variant-tag">Phân loại hàng: {{ rev.variantInfo }}</span>
+                  }
+                </div>
+                <span class="rev-date">{{ rev.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+
+              <div class="rev-body">
+                <p class="rev-comment">{{ rev.comment || 'Khách hàng không để lại lời nhắn.' }}</p>
+                
+                @if (rev.images && rev.images.length > 0) {
+                  <div class="rev-gallery">
+                    @for (imgUrl of rev.images; track imgUrl) {
+                      <a [href]="imgUrl" target="_blank" class="gallery-item">
+                        <img [src]="imgUrl" alt="Ảnh đánh giá" />
+                      </a>
+                    }
+                  </div>
+                }
+
+                @if (rev.shopReply) {
+                  <div class="shop-reply-box">
+                    <span class="shop-title">Phản hồi từ Người bán:</span>
+                    <p class="shop-msg">{{ rev.shopReply }}</p>
+                  </div>
+                }
+
+                @if (rev.coinsAwarded && rev.coinsAwarded > 0) {
+                  <div class="coin-badge">
+                    <lucide-angular [img]="CoinsIcon" [size]="12"></lucide-angular>
+                    Đã nhận +{{ rev.coinsAwarded }} Xu thưởng
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </section>
 
     <!-- Sản phẩm liên quan -->
     @if (related().length > 0) {
@@ -121,5 +221,3 @@
     }
   }
 </div>
-
-

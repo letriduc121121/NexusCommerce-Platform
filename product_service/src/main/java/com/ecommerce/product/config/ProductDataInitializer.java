@@ -2,8 +2,11 @@ package com.ecommerce.product.config;
 
 import com.ecommerce.product.entity.Category;
 import com.ecommerce.product.entity.Product;
+import com.ecommerce.product.entity.Review;
+import com.ecommerce.product.entity.ReviewImage;
 import com.ecommerce.product.repository.CategoryRepository;
 import com.ecommerce.product.repository.ProductRepository;
+import com.ecommerce.product.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.ecommerce.product.service.ProductService;
@@ -11,9 +14,11 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -22,17 +27,23 @@ public class ProductDataInitializer implements CommandLineRunner {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ReviewRepository reviewRepository;
     private final ProductService productService;
 
     @Override
     public void run(String... args) throws Exception {
-        Map<String, Category> categoryMap = seedCategories();
-        seedInitialProducts(categoryMap);
-        seedAdditional20Products(categoryMap);
+        log.info("🚀 [PRODUCT DATA INITIALIZER] Khởi chạy DataLoader...");
+        try {
+            Map<String, Category> categoryMap = seedCategories();
+            seedInitialProducts(categoryMap);
+            seedAdditional20Products(categoryMap);
+            seedSampleReviewsAndStats();
 
-        // syncProduct() bên Inventory là idempotent nên chạy lại mỗi lần khởi động là an toàn,
-        // đồng thời tự vá những bản ghi kho bị thiếu nếu event từng thất lạc.
-        productService.republishCatalog();
+            productService.republishCatalog();
+            log.info("✅ [PRODUCT DATA INITIALIZER] Hoàn tất DataLoader!");
+        } catch (Exception e) {
+            log.error("❌ [PRODUCT DATA INITIALIZER] Lỗi trong quá trình DataInitializer: {}", e.getMessage(), e);
+        }
     }
 
     private Map<String, Category> seedCategories() {
@@ -245,5 +256,209 @@ public class ProductDataInitializer implements CommandLineRunner {
             productRepository.saveAll(toSave);
             log.info("Seed bổ sung {} sản phẩm mới thành công vào product_db!", toSave.size());
         }
+    }
+
+    private void seedSampleReviewsAndStats() {
+        if (reviewRepository.count() > 0) {
+            log.info("Dữ liệu đánh giá sản phẩm đã tồn tại, bỏ qua seed review.");
+            return;
+        }
+
+        log.info("Đang seed dữ liệu đánh giá mẫu và cập nhật chỉ số sao/lượt bán cho sản phẩm...");
+
+        // 1. Lấy một số sản phẩm nổi bật
+        Product iphone = productRepository.findBySku("IP15PM-256-TI").orElse(null);
+        Product macbook = productRepository.findBySku("MBP-M3PRO-16").orElse(null);
+        Product sony = productRepository.findBySku("SONY-WH1000XM5").orElse(null);
+        Product s24 = productRepository.findBySku("SGS24U-512-GY").orElse(null);
+        Product logi = productRepository.findBySku("LOGI-MX-MASTER3").orElse(null);
+
+        UUID sampleUserId1 = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        UUID sampleUserId2 = UUID.fromString("22222222-2222-2222-2222-222222222222");
+        UUID sampleUserId3 = UUID.fromString("33333333-3333-3333-3333-333333333333");
+
+        // --- SEED REVIEWS CHO IPHONE 15 PRO MAX ---
+        if (iphone != null) {
+            Review r1 = Review.builder()
+                .orderItemId(UUID.randomUUID())
+                .productId(iphone.getId())
+                .userId(sampleUserId1)
+                .userFullName("Nguyễn Văn An")
+                .rating(5)
+                .comment("Máy màu Titan Tự Nhiên đẹp xuất sắc, cầm rất nhẹ tay nhờ khung viền Titan cao cấp. Chip A17 Pro mượt mà cân mọi tựa game nặng. Shop giao hàng siêu nhanh chỉ trong 2 tiếng tại Hà Nội, đóng gói cẩn thận 2 lớp chống sốc!")
+                .variantInfo("Titan Tự Nhiên, 256GB")
+                .coinsAwarded(200)
+                .isHidden(false)
+                .isEdited(false)
+                .shopReply("Cảm ơn bạn An đã tin tưởng và ủng hộ Shop NexusCommerce! Chúc bạn có trải nghiệm tuyệt vời cùng iPhone 15 Pro Max nhé.")
+                .shopRepliedAt(LocalDateTime.now().minusDays(1))
+                .build();
+            r1.addImage(ReviewImage.builder().imageUrl("https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600").build());
+
+            Review r2 = Review.builder()
+                .orderItemId(UUID.randomUUID())
+                .productId(iphone.getId())
+                .userId(sampleUserId2)
+                .userFullName("Trần Thị Bích")
+                .rating(5)
+                .comment("Hàng chính hãng VN/A nguyên seal 100%. Màn hình Promotion 120Hz siêu mượt, camera zoom 5x chụp ảnh nét căng từng chi tiết nhỏ.")
+                .variantInfo("Titan Tự Nhiên, 256GB")
+                .coinsAwarded(100)
+                .isHidden(false)
+                .isEdited(false)
+                .build();
+
+            Review r3 = Review.builder()
+                .orderItemId(UUID.randomUUID())
+                .productId(iphone.getId())
+                .userId(sampleUserId3)
+                .userFullName("Lê Hoàng Nam")
+                .rating(4)
+                .comment("Sản phẩm dùng rất mượt, pin dùng cả ngày thoải mái. Giá có hơi cao một chút nhưng tiền nào của nấy rất xứng đáng.")
+                .variantInfo("Titan Đen, 256GB")
+                .coinsAwarded(100)
+                .isHidden(false)
+                .isEdited(false)
+                .build();
+
+            reviewRepository.saveAll(List.of(r1, r2, r3));
+
+            iphone.setAvgRating(4.7);
+            iphone.setTotalReviews(3);
+            iphone.setTotalSold(158);
+            productRepository.save(iphone);
+        }
+
+        // --- SEED REVIEWS CHO MACBOOK PRO M3 ---
+        if (macbook != null) {
+            Review r1 = Review.builder()
+                .orderItemId(UUID.randomUUID())
+                .productId(macbook.getId())
+                .userId(sampleUserId1)
+                .userFullName("Phạm Quốc Hùng")
+                .rating(5)
+                .comment("Dung lượng 18GB RAM chạy Docker, IntelliJ IDEA và Xcode cùng lúc cực kỳ mượt mà không hề bị giật lag hay tràn RAM. Màn hình Liquid Retina XDR quá đỉnh. Rất đáng đồng tiền bát gạo!")
+                .variantInfo("Space Black, 18GB/512GB")
+                .coinsAwarded(200)
+                .isHidden(false)
+                .isEdited(false)
+                .shopReply("Shop cảm ơn anh Hùng nhiều ạ! Chúc anh làm việc hiệu quả và gặt hái nhiều thành công cùng MacBook Pro M3 Pro.")
+                .shopRepliedAt(LocalDateTime.now().minusDays(2))
+                .build();
+            r1.addImage(ReviewImage.builder().imageUrl("https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600").build());
+
+            Review r2 = Review.builder()
+                .orderItemId(UUID.randomUUID())
+                .productId(macbook.getId())
+                .userId(sampleUserId2)
+                .userFullName("Vũ Hải Đăng")
+                .rating(5)
+                .comment("Máy đẹp leng keng, quạt chạy êm ru không nghe thấy tiếng. Thời lượng pin trâu dùng lướt web và code liên tục gần 15 tiếng đồng hồ.")
+                .variantInfo("Silver, 18GB/512GB")
+                .coinsAwarded(100)
+                .isHidden(false)
+                .isEdited(false)
+                .build();
+
+            reviewRepository.saveAll(List.of(r1, r2));
+
+            macbook.setAvgRating(5.0);
+            macbook.setTotalReviews(2);
+            macbook.setTotalSold(42);
+            productRepository.save(macbook);
+        }
+
+        // --- SEED REVIEWS CHO SONY WH-1000XM5 ---
+        if (sony != null) {
+            Review r1 = Review.builder()
+                .orderItemId(UUID.randomUUID())
+                .productId(sony.getId())
+                .userId(sampleUserId3)
+                .userFullName("Đỗ Minh Quân")
+                .rating(5)
+                .comment("Khả năng chống ồn ANC đỉnh cao thế giới, đeo đi máy bay hay ngồi quán cafe đông đúc ồn ào đều triệt tiêu âm thanh rất tốt. Âm bass trầm ấm, tai nghe siêu nhẹ đeo lâu không đau tai!")
+                .variantInfo("Màu Đen")
+                .coinsAwarded(200)
+                .isHidden(false)
+                .isEdited(false)
+                .shopReply("Cảm ơn bạn Quân đã lựa chọn sản phẩm tai nghe chống ồn Sony WH-1000XM5 tại NexusCommerce!")
+                .shopRepliedAt(LocalDateTime.now().minusHours(5))
+                .build();
+            r1.addImage(ReviewImage.builder().imageUrl("https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600").build());
+
+            reviewRepository.save(r1);
+
+            sony.setAvgRating(5.0);
+            sony.setTotalReviews(1);
+            sony.setTotalSold(89);
+            productRepository.save(sony);
+        }
+
+        // --- SEED REVIEWS CHO SAMSUNG S24 ULTRA ---
+        if (s24 != null) {
+            Review r1 = Review.builder()
+                .orderItemId(UUID.randomUUID())
+                .productId(s24.getId())
+                .userId(sampleUserId1)
+                .userFullName("Hoàng Ngọc Mai")
+                .rating(5)
+                .comment("Tính năng Galaxy AI dịch trực tiếp cuộc gọi và khoanh vùng tìm kiếm khoảnh khắc siêu tiện lợi. Bút S-Pen viết ghi chú mượt như trên giấy thật, màn hình phẳng dễ dán kính cường lực.")
+                .variantInfo("Xám Titanium, 512GB")
+                .coinsAwarded(200)
+                .isHidden(false)
+                .isEdited(false)
+                .build();
+            r1.addImage(ReviewImage.builder().imageUrl("https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=600").build());
+
+            reviewRepository.save(r1);
+
+            s24.setAvgRating(5.0);
+            s24.setTotalReviews(1);
+            s24.setTotalSold(95);
+            productRepository.save(s24);
+        }
+
+        // --- SEED REVIEWS CHO LOGITECH MX MASTER 3S ---
+        if (logi != null) {
+            Review r1 = Review.builder()
+                .orderItemId(UUID.randomUUID())
+                .productId(logi.getId())
+                .userId(sampleUserId2)
+                .userFullName("Ngô Tất Thành")
+                .rating(5)
+                .comment("Con chuột huyền thoại cho dân lập trình và văn phòng! Cuộn vô hạn MagSpeed lướt code siêu nhanh, nút bấm Silent Click êm ru không ảnh hưởng tới đồng nghiệp xung quanh.")
+                .variantInfo("Màu Đen Graphit")
+                .coinsAwarded(100)
+                .isHidden(false)
+                .isEdited(false)
+                .build();
+
+            reviewRepository.save(r1);
+
+            logi.setAvgRating(5.0);
+            logi.setTotalReviews(1);
+            logi.setTotalSold(210);
+            productRepository.save(logi);
+        }
+
+        // Cập nhật số lượt bán (totalSold) & điểm trung bình mặc định cho các sản phẩm còn lại để giao diện hiển thị đẹp mắt
+        List<Product> allProducts = productRepository.findAll();
+        for (Product p : allProducts) {
+            boolean updated = false;
+            if (p.getTotalSold() == null || p.getTotalSold() == 0) {
+                p.setTotalSold((int) (20 + (p.getId().hashCode() % 80 + 80) % 80));
+                updated = true;
+            }
+            if (p.getAvgRating() == null || p.getAvgRating() == 0.0) {
+                p.setAvgRating(4.8);
+                p.setTotalReviews(5);
+                updated = true;
+            }
+            if (updated) {
+                productRepository.save(p);
+            }
+        }
+
+        log.info("✅ Hoàn tất seed dữ liệu đánh giá mẫu & cập nhật chỉ số sản phẩm!");
     }
 }

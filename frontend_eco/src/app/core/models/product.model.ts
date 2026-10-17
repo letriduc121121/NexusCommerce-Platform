@@ -13,6 +13,9 @@ export interface Product {
   description?: string;
   price: number;
   imageUrl?: string;
+  avgRating?: number;
+  totalReviews?: number;
+  totalSold?: number;
   status?: string;
   createdAt?: string;
   updatedAt?: string;

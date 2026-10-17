@@ -220,6 +220,22 @@
               }
             </div>
 
+            <!-- Sử dụng Xu Tích Lũy -->
+            @if (userCoins() > 0) {
+              <div class="coins-redemption-box">
+                <label class="coins-checkbox-label">
+                  <input type="checkbox" [ngModel]="useCoins()" (ngModelChange)="useCoins.set($event)" />
+                  <div class="coins-info-text">
+                    <div class="coins-title-row">
+                      <lucide-angular [img]="CoinsIcon" [size]="16" class="coin-icon"></lucide-angular>
+                      <strong>Dùng Xu Tích Lũy ({{ userCoins() }} Xu)</strong>
+                    </div>
+                    <span class="coins-sub">Quy đổi 1 Xu = 1 VNĐ trực tiếp vào tổng bill</span>
+                  </div>
+                </label>
+              </div>
+            }
+
             <div class="price-breakdown">
               <div class="price-row">
                 <span>Tạm tính sản phẩm</span>
@@ -229,6 +245,12 @@
                 <div class="price-row">
                   <span>Voucher giảm giá</span>
                   <span class="discount">−{{ discountAmount() | currency:'VND':'symbol-narrow':'1.0-0' }}</span>
+                </div>
+              }
+              @if (coinsDiscount() > 0) {
+                <div class="price-row">
+                  <span>Giảm từ Xu tích lũy ({{ coinsDiscount() }} Xu)</span>
+                  <span class="discount">−{{ coinsDiscount() | currency:'VND':'symbol-narrow':'1.0-0' }}</span>
                 </div>
               }
               <div class="price-row">

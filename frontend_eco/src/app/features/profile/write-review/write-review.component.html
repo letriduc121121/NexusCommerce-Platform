@@ -1,0 +1,338 @@
+<div class="write-review-container">
+  <!-- BREADCRUMB & BACK BUTTON -->
+  <div class="page-top-nav">
+    <button type="button" class="btn-back" (click)="goBack()">
+      <lucide-angular [img]="ArrowLeftIcon" [size]="18"></lucide-angular>
+      <span>Quay lại Lịch sử đơn hàng</span>
+    </button>
+    <div class="breadcrumb-trail">
+      <a routerLink="/profile">Tài khoản</a>
+      <span class="separator">/</span>
+      <a routerLink="/profile/orders">Đơn hàng</a>
+      <span class="separator">/</span>
+      <span class="current">Đánh giá sản phẩm</span>
+    </div>
+  </div>
+
+  <!-- LOADING STATE -->
+  @if (isLoading()) {
+    <div class="state-card loading-card">
+      <div class="spinner"></div>
+      <p>Đang tải thông tin đơn hàng...</p>
+    </div>
+  }
+
+  <!-- ALREADY REVIEWED STATE -->
+  @else if (isAlreadyReviewed()) {
+    <div class="state-card reviewed-card">
+      <div class="status-icon success-icon">
+        <lucide-angular [img]="CheckCircleIcon" [size]="48"></lucide-angular>
+      </div>
+      <h2>Sản phẩm này đã được đánh giá!</h2>
+      <p>Bạn đã để lại nhận xét cho món hàng này trong đơn hàng của mình. Cảm ơn sự đóng góp của bạn dành cho cộng đồng mua sắm!</p>
+      <div class="actions">
+        <button type="button" class="btn-primary" (click)="goBack()">
+          Quay lại Đơn Hàng
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ERROR / INELIGIBLE STATE -->
+  @else if (errorMessage()) {
+    <div class="state-card error-card">
+      <div class="status-icon warn-icon">
+        <lucide-angular [img]="AlertTriangleIcon" [size]="48"></lucide-angular>
+      </div>
+      <h2>Không thể đánh giá</h2>
+      <p>{{ errorMessage() }}</p>
+      <div class="actions">
+        <button type="button" class="btn-secondary" (click)="goBack()">
+          Quay lại Đơn Hàng
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- MAIN REVIEW FORM -->
+  @else {
+    <div class="review-grid">
+      <!-- CỘT TRÁI: THÔNG TIN SẢN PHẨM & ĐƠN HÀNG -->
+      <div class="product-sidebar">
+        <div class="product-card">
+          <div class="card-badge">
+            <lucide-angular [img]="CheckCircleIcon" [size]="14"></lucide-angular>
+            <span>Đã nhận hàng thành công</span>
+          </div>
+
+          <div class="product-media">
+            <img
+              [src]="orderItem()?.imageUrl || 'https://placehold.co/300x300?text=AULA+Shop'"
+              [alt]="orderItem()?.productName"
+              class="product-image"
+            />
+          </div>
+
+          <div class="product-info">
+            <h3 class="product-name">{{ orderItem()?.productName }}</h3>
+
+            <div class="product-price-row">
+              <span class="label">Đơn giá:</span>
+              <span class="value">{{ orderItem()?.price | currency:'VND':'symbol-narrow':'1.0-0' }}</span>
+            </div>
+
+            <div class="product-price-row">
+              <span class="label">Số lượng:</span>
+              <span class="value">x {{ orderItem()?.quantity }}</span>
+            </div>
+
+            <div class="product-divider"></div>
+
+            <div class="product-price-row total-row">
+              <span class="label">Thành tiền:</span>
+              <span class="total-val">{{ orderItem()?.subtotal | currency:'VND':'symbol-narrow':'1.0-0' }}</span>
+            </div>
+          </div>
+
+          @if (order(); as ord) {
+            <div class="order-context-box">
+              <div class="context-item">
+                <span class="ctx-label">Mã đơn hàng:</span>
+                <span class="ctx-value">#{{ ord.id.slice(0, 8).toUpperCase() }}</span>
+              </div>
+              <div class="context-item">
+                <span class="ctx-label">Ngày mua:</span>
+                <span class="ctx-value">{{ ord.createdAt | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- HƯỚNG DẪN TÍCH XU -->
+        <div class="coins-guide-card">
+          <div class="guide-header">
+            <lucide-angular [img]="CoinsIcon" [size]="18" class="coin-icon"></lucide-angular>
+            <h4>Quy tắc nhận Xu AULA</h4>
+          </div>
+          <ul class="guide-list">
+            <li>
+              <span class="point-badge">+100 Xu</span>
+              <span>Viết nhận xét chi tiết từ <strong>50 ký tự</strong> trở lên.</span>
+            </li>
+            <li>
+              <span class="point-badge max">+200 Xu</span>
+              <span>Đạt 50 ký tự <strong>kèm theo hình ảnh chụp thực tế</strong> sản phẩm.</span>
+            </li>
+            <li class="note-item">
+              <lucide-angular [img]="InfoIcon" [size]="14"></lucide-angular>
+              <span>1 Xu = 1 VNĐ, trừ trực tiếp khi thanh toán đơn hàng sau!</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- CỘT PHẢI: BIỂU MẪU ĐÁNH GIÁ -->
+      <div class="review-form-column">
+        <div class="form-card">
+          <div class="form-header">
+            <h1 class="page-title">Viết Đánh Giá Sản Phẩm</h1>
+            <p class="page-desc">
+              Chia sẻ cảm nhận chân thực của bạn để giúp khách hàng khác có thêm thông tin hữu ích khi chọn mua!
+            </p>
+          </div>
+
+          <!-- GAMIFICATION REWARD BANNER -->
+          <div class="reward-banner" [class.max-reward]="predictedCoins() === 200" [class.half-reward]="predictedCoins() === 100">
+            <div class="reward-icon-wrap">
+              <lucide-angular [img]="CoinsIcon" [size]="28" class="banner-coin"></lucide-angular>
+            </div>
+            <div class="reward-content">
+              <div class="reward-title">
+                Xu thưởng dự kiến nhận được:
+                <span class="coin-value">+{{ predictedCoins() }} Xu</span>
+              </div>
+              <p class="reward-tip">
+                @if (predictedCoins() === 200) {
+                  🎉 Xuất sắc! Bạn đã đủ điều kiện nhận mức thưởng tối đa 200 Xu thưởng tích lũy!
+                } @else if (predictedCoins() === 100) {
+                  💡 Tải lên hoặc đính kèm ảnh chụp thực tế bên dưới để nhận thêm +100 Xu nữa (Tổng tới 200 Xu)!
+                } @else {
+                  💡 Viết từ 50 ký tự trở lên để nhận ngay 100 Xu đầu tiên vào ví!
+                }
+              </p>
+            </div>
+          </div>
+
+          <!-- 1. CHỌN SỐ SAO -->
+          <div class="form-section">
+            <label class="section-heading">
+              <span class="step-num">1</span>
+              Chất lượng tổng thể sản phẩm:
+            </label>
+            <div class="star-rating-box">
+              <div class="stars-list">
+                @for (star of [1, 2, 3, 4, 5]; track star) {
+                  <button
+                    type="button"
+                    class="star-item-btn"
+                    [class.active]="star <= currentDisplayRating()"
+                    (mouseenter)="setHoverRating(star)"
+                    (mouseleave)="setHoverRating(0)"
+                    (click)="setRating(star)"
+                  >
+                    ★
+                  </button>
+                }
+              </div>
+              <div class="rating-mood-label" [class.good]="currentDisplayRating() >= 4">
+                @switch (currentDisplayRating()) {
+                  @case (1) { 😡 Rất tệ - Quá thất vọng }
+                  @case (2) { 🙁 Không hài lòng - Cần cải thiện }
+                  @case (3) { 😐 Bình thường - Tạm ổn }
+                  @case (4) { 😀 Hài lòng - Sản phẩm tốt }
+                  @case (5) { 😍 Cực kỳ hài lòng - Rất đáng tiền! }
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. NỘI DUNG ĐÁNH GIÁ -->
+          <div class="form-section">
+            <div class="section-heading-row">
+              <label class="section-heading">
+                <span class="step-num">2</span>
+                Nội dung đánh giá chi tiết:
+              </label>
+              <div class="char-counter-pill" [class.passed]="comment().trim().length >= 50">
+                @if (comment().trim().length >= 50) {
+                  <lucide-angular [img]="CheckCircleIcon" [size]="14"></lucide-angular>
+                  <span>{{ comment().trim().length }} ký tự (Đạt chuẩn +100 Xu)</span>
+                } @else {
+                  <span>{{ comment().trim().length }} / 50 ký tự</span>
+                }
+              </div>
+            </div>
+
+            <!-- Gợi ý nhanh -->
+            <div class="quick-tags-container">
+              <span class="quick-label">Gợi ý nhanh:</span>
+              <div class="tags-row">
+                @for (tag of quickTags; track tag) {
+                  <button type="button" class="quick-tag-chip" (click)="appendTag(tag)">
+                    + {{ tag }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <textarea
+              class="review-textarea"
+              rows="6"
+              placeholder="Hãy chia sẻ cảm nhận về form dáng, chất liệu vải, đường may, độ vừa vặn khi mặc hoặc thời gian giao hàng của shop..."
+              [ngModel]="comment()"
+              (ngModelChange)="comment.set($event)"
+            ></textarea>
+          </div>
+
+          <!-- 3. HÌNH ẢNH THỰC TẾ (UPLOAD & DÁN URL) -->
+          <div class="form-section">
+            <label class="section-heading">
+              <span class="step-num">3</span>
+              Đính kèm hình ảnh thực tế:
+            </label>
+            <p class="section-sub">
+              Tải lên ảnh chụp thực tế giúp người mua sau dễ dàng tham khảo và giúp bạn nhận trọn vẹn <strong>+200 Xu</strong>.
+            </p>
+
+            <!-- UPLOAD DROPZONE -->
+            @if (!photoUrl()) {
+              <div class="upload-dropzone-box" [class.uploading]="isUploadingPhoto()">
+                <input
+                  type="file"
+                  id="reviewPhotoInput"
+                  accept="image/*"
+                  class="file-input-hidden"
+                  (change)="onFileSelected($event)"
+                  [disabled]="isUploadingPhoto()"
+                />
+                <label for="reviewPhotoInput" class="dropzone-label">
+                  @if (isUploadingPhoto()) {
+                    <div class="upload-spinner"></div>
+                    <span class="upload-title">Đang tải ảnh lên Cloudinary...</span>
+                    <span class="upload-hint">Vui lòng chờ trong giây lát</span>
+                  } @else {
+                    <div class="upload-icon-circle">
+                      <lucide-angular [img]="UploadIcon" [size]="24"></lucide-angular>
+                    </div>
+                    <span class="upload-title">Nhấn vào đây để chọn ảnh từ thiết bị</span>
+                    <span class="upload-hint">Hỗ trợ định dạng PNG, JPG, WEBP (Tối đa 10MB)</span>
+                  }
+                </label>
+              </div>
+
+              <!-- HOẶC DÁN URL -->
+              <div class="url-divider">
+                <span>hoặc dán đường dẫn ảnh trực tiếp</span>
+              </div>
+
+              <div class="photo-input-group">
+                <div class="input-icon-box">
+                  <lucide-angular [img]="CameraIcon" [size]="18"></lucide-angular>
+                </div>
+                <input
+                  type="text"
+                  class="photo-url-field"
+                  placeholder="Dán URL hình ảnh (VD: https://res.cloudinary.com/.../image.jpg)"
+                  [ngModel]="photoUrl()"
+                  (ngModelChange)="photoUrl.set($event)"
+                />
+              </div>
+            } @else {
+              <!-- ẢNH ĐÃ ĐƯỢC ĐÍNH KÈM / TẢI LÊN -->
+              <div class="photo-uploaded-card">
+                <div class="photo-preview-box">
+                  <img [src]="photoUrl()" alt="Ảnh đánh giá thực tế" class="preview-thumbnail" />
+                  <button type="button" class="btn-remove-photo" (click)="clearPhoto()" title="Xóa ảnh này">
+                    <lucide-angular [img]="XIcon" [size]="16"></lucide-angular>
+                  </button>
+                </div>
+                <div class="photo-details">
+                  <div class="photo-status">
+                    <lucide-angular [img]="CheckCircleIcon" [size]="16" class="check-icon"></lucide-angular>
+                    <strong>Đã tải lên ảnh chụp thực tế (+100 Xu)</strong>
+                  </div>
+                  <p class="photo-desc">Hình ảnh đã sẵn sàng để gửi cùng nhận xét của bạn.</p>
+                  <button type="button" class="btn-change-photo" (click)="clearPhoto()">
+                    Thay đổi ảnh khác
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="form-actions-bar">
+            <button type="button" class="btn-cancel" (click)="goBack()">
+              Hủy bỏ
+            </button>
+
+            <button
+              type="button"
+              class="btn-submit"
+              [disabled]="isSubmitting() || isUploadingPhoto()"
+              (click)="submitReview()"
+            >
+              @if (isSubmitting()) {
+                <div class="btn-spinner"></div>
+                <span>Đang gửi đánh giá...</span>
+              } @else {
+                <lucide-angular [img]="SparklesIcon" [size]="18"></lucide-angular>
+                <span>Hoàn tất & Gửi Đánh Giá (+{{ predictedCoins() }} Xu)</span>
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

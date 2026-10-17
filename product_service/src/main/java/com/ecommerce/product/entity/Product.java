@@ -45,6 +45,18 @@ public class Product implements Serializable {
     @Column(nullable = false, length = 20)
     private String status;
 
+    @Builder.Default
+    @Column(name = "avg_rating", nullable = false, columnDefinition = "DOUBLE PRECISION DEFAULT 0.0")
+    private Double avgRating = 0.0;
+
+    @Builder.Default
+    @Column(name = "total_reviews", nullable = false, columnDefinition = "INTEGER DEFAULT 0")
+    private Integer totalReviews = 0;
+
+    @Builder.Default
+    @Column(name = "total_sold", nullable = false, columnDefinition = "INTEGER DEFAULT 0")
+    private Integer totalSold = 0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -61,6 +73,15 @@ public class Product implements Serializable {
         }
         if (status == null) {
             status = "ACTIVE";
+        }
+        if (avgRating == null) {
+            avgRating = 0.0;
+        }
+        if (totalReviews == null) {
+            totalReviews = 0;
+        }
+        if (totalSold == null) {
+            totalSold = 0;
         }
     }
 

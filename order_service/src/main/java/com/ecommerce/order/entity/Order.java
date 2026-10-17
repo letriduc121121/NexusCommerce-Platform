@@ -65,6 +65,14 @@ public class Order {
     @Builder.Default
     private BigDecimal shippingFee = BigDecimal.ZERO;
 
+    @Column(name = "coins_used")
+    @Builder.Default
+    private Long coinsUsed = 0L;
+
+    @Column(name = "coins_discount_amount", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal coinsDiscountAmount = BigDecimal.ZERO;
+
     @Column(name = "payment_method", nullable = false, length = 20)
     @Builder.Default
     private String paymentMethod = "COD";
@@ -92,6 +100,8 @@ public class Order {
         if (paymentStatus == null) paymentStatus = "PENDING";
         if (shippingFee == null) shippingFee = BigDecimal.ZERO;
         if (discountAmount == null) discountAmount = BigDecimal.ZERO;
+        if (coinsUsed == null) coinsUsed = 0L;
+        if (coinsDiscountAmount == null) coinsDiscountAmount = BigDecimal.ZERO;
     }
 
     @PreUpdate

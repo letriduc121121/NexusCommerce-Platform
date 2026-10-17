@@ -30,7 +30,7 @@ public class OrderEventListener {
     private final ObjectMapper objectMapper;
 
     @RetryableTopic(attempts = "4", backoff = @Backoff(delay = 1000, multiplier = 2.0))
-    @KafkaListener(topics = "order-topic", groupId = "inventory-service-group")
+    @KafkaListener(topics = {"order-topic", "order-refunded-topic"}, groupId = "inventory-service-group")
     @SuppressWarnings("unchecked")
     public void handle(String message) throws Exception {
         Map<String, Object> event = objectMapper.readValue(message, Map.class);
@@ -41,10 +41,14 @@ public class OrderEventListener {
                         ((Number) row.get("quantity")).intValue()))
                 .toList();
 
-        switch (String.valueOf(event.get("eventType"))) {
+        String eventType = String.valueOf(event.get("eventType"));
+        switch (eventType) {
             case "ORDER_CREATED" -> inventoryService.commit(orderId, items);
-            case "ORDER_CANCELLED" -> inventoryService.restock(orderId, items);
-            default -> log.debug("Bỏ qua order event không liên quan: {}", event.get("eventType"));
+            case "ORDER_CANCELLED", "ORDER_REFUNDED" -> {
+                inventoryService.restock(orderId, items);
+                log.info("📦 [INVENTORY SERVICE] Đã hoàn tồn kho thành công cho đơn {}: event={}", orderId, eventType);
+            }
+            default -> log.debug("Bỏ qua order event không liên quan: {}", eventType);
         }
     }
 }

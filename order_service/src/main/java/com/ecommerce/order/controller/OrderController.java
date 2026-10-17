@@ -35,6 +35,14 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrderHistory(userId(auth)));
     }
 
+    /** API nội bộ dùng cho product_service gọi xác minh trước khi cho phép đánh giá. */
+    @GetMapping("/verify-purchase")
+    public ResponseEntity<com.ecommerce.order.dto.VerifyPurchaseResponse> verifyPurchase(
+            @RequestParam UUID orderItemId,
+            @RequestParam UUID userId) {
+        return ResponseEntity.ok(orderService.verifyPurchase(orderItemId, userId));
+    }
+
     @GetMapping("/{orderId}")
     public ResponseEntity<Order> getOrderDetails(Authentication auth, @PathVariable UUID orderId) {
         return ResponseEntity.ok(orderService.getOrderDetails(userId(auth), orderId, userRole(auth)));
@@ -66,6 +74,12 @@ public class OrderController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String paymentStatus) {
         return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status, paymentStatus));
+    }
+
+    /** Admin xác nhận trả hàng / hoàn tiền (DELIVERED -> REFUNDED) */
+    @PutMapping("/{orderId}/refund")
+    public ResponseEntity<Order> refundOrder(@PathVariable UUID orderId) {
+        return ResponseEntity.ok(orderService.refundOrder(orderId));
     }
 
     // ==================== HỖ TRỢ ====================

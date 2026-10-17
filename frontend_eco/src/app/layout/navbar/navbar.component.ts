@@ -18,7 +18,8 @@ import {
   Plus,
   Minus,
   ShoppingCart,
-  Loader2
+  Loader2,
+  Coins
 } from 'lucide-angular';
 import { AuthService } from '../../core/services/auth.service';
 import { CartService } from '../../core/services/cart.service';
@@ -57,6 +58,7 @@ export class NavbarComponent implements OnInit {
   readonly MinusIcon = Minus;
   readonly ShoppingCartIcon = ShoppingCart;
   readonly Loader2Icon = Loader2;
+  readonly CoinsIcon = Coins;
 
   isScrolled = signal(false);
   isMobileMenuOpen = signal(false);

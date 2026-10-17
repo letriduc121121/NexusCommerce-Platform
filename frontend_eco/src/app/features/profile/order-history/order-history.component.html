@@ -42,6 +42,20 @@
                     {{ item.price | currency:'VND':'symbol-narrow':'1.0-0' }} x {{ item.quantity }}
                   </p>
                 </div>
+
+                @if (order.status === 'DELIVERED') {
+                  @if (isItemReviewed(item.id)) {
+                    <div class="reviewed-badge">
+                      <lucide-angular [img]="CheckCircleIcon" [size]="14"></lucide-angular>
+                      <span>Đã đánh giá</span>
+                    </div>
+                  } @else {
+                    <button type="button" class="btn-review-item" (click)="goToReview(item, order)">
+                      <lucide-angular [img]="CoinsIcon" [size]="14"></lucide-angular>
+                      <span>Đánh giá nhận 200 Xu</span>
+                    </button>
+                  }
+                }
               </div>
             }
           </div>
@@ -54,6 +68,12 @@
               @if (order.voucherCode) {
                 <span class="voucher-tag">Mã giảm giá: {{ order.voucherCode }}
                   (−{{ order.discountAmount | currency:'VND':'symbol-narrow':'1.0-0' }})</span>
+              }
+              @if (order.coinsDiscountAmount && order.coinsDiscountAmount > 0) {
+                <span class="coins-used-tag">
+                  <lucide-angular [img]="CoinsIcon" [size]="12"></lucide-angular>
+                  Đã dùng {{ order.coinsUsed }} Xu (−{{ order.coinsDiscountAmount | currency:'VND':'symbol-narrow':'1.0-0' }})
+                </span>
               }
             </div>
             <div class="total-price-box">

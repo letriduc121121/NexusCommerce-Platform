@@ -109,6 +109,7 @@ public class UserService {
                 .phone(user.getPhone())
                 .status(user.getStatus())
                 .role(user.getRole().getName())
+                .rewardCoins(user.getRewardCoins() != null ? user.getRewardCoins() : 0L)
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();

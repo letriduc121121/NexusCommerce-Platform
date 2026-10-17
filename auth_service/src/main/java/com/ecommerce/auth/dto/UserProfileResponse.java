@@ -19,6 +19,7 @@ public class UserProfileResponse {
     private String phone;
     private String status;
     private String role;
+    private Long rewardCoins;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
